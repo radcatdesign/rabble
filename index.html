@@ -142,6 +142,9 @@ a,button{-webkit-tap-highlight-color:transparent}
 .live-pill:hover{border-color:var(--text);background-color:color-mix(in srgb,var(--text) 8%,transparent)}
 @media (max-width:380px){.live-pill{padding:0 12px;letter-spacing:.14em}}
 .topbar .menu-btn{width:46px;padding:0;justify-content:center}
+.icon-btn{display:grid;place-items:center;width:46px;height:46px;border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 26%,transparent);background:color-mix(in srgb,var(--ink) 35%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--text);transition:border-color .3s,background-color .3s,color .3s}
+.icon-btn:hover{border-color:var(--magenta);color:var(--magenta-soft);background-color:color-mix(in srgb,var(--magenta) 10%,transparent)}
+.icon-btn svg{width:19px;height:19px;fill:currentColor}
 .menu-btn{display:inline-flex;align-items:center;gap:12px;height:46px;padding:0 20px 0 16px;
   border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 26%,transparent);background:color-mix(in srgb,var(--ink) 35%,transparent);
   -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--text);font:600 14px/1 var(--f-body);letter-spacing:.02em;cursor:pointer;transition:border-color .3s,background-color .3s}
@@ -403,6 +406,7 @@ main{position:relative;z-index:1}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="spark" viewBox="0 0 24 24"><path d="M12 0C12.9 7.6 16.4 11.1 24 12 16.4 12.9 12.9 16.4 12 24 11.1 16.4 7.6 12.9 0 12 7.6 11.1 11.1 7.6 12 0Z"/></symbol>
   <symbol id="play" viewBox="0 0 24 24"><path d="M6 3.5v17a1 1 0 0 0 1.5.86l14-8.5a1 1 0 0 0 0-1.72l-14-8.5A1 1 0 0 0 6 3.5Z"/></symbol>
+  <symbol id="mail" viewBox="0 0 24 24"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm1 2.3V17h16V7.3l-7.4 5.5a1 1 0 0 1-1.2 0L4 7.3ZM5.8 7l6.2 4.6L18.2 7H5.8Z"/></symbol>
   <symbol id="yt" viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4L15.8 12l-6.2 3.6Z"/></symbol>
 </svg>
 
@@ -421,6 +425,7 @@ main{position:relative;z-index:1}
 
 <div class="topbar hero-anim">
   <a class="live-pill" href="#episodes"><span class="live-dot"></span>Now streaming</a>
+  <a class="icon-btn" href="#join" aria-label="Subscribe by email"><svg aria-hidden="true"><use href="#mail"/></svg></a>
   <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menu"><span class="menu-icon" aria-hidden="true"><i></i><i></i></span></button>
 </div>
 
@@ -755,7 +760,7 @@ function initCloth() {
   }
   const fill = new THREE.PointLight('#4168ff', 8, 30); fill.position.set(0, -5, 4); scene.add(fill);
 
-  const state = { open: 0, current: 0, movement: .73, sens: 1, intensity: .8 };
+  const state = { open: 0, current: 0, movement: .73, sens: 1, intensity: .8, exitT: 0, gone: false };
   const resize = () => {
     const w = innerWidth, h = innerHeight;
     camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h, false);
@@ -802,6 +807,13 @@ function initCloth() {
     raf = requestAnimationFrame(frame);
     const now = performance.now() / 1000, dt = Math.min(now - last, .05); last = now; t += dt;
     state.current += (state.open - state.current) * (1 - Math.exp(-dt * 3.2));
+    // once the panels are mostly gathered, carry them on past the screen edges
+    if (state.open === 1 && state.current > .55 && !state.gone) {
+      state.exitT = Math.min(1, state.exitT + dt / 1.1);
+      const e = state.exitT * state.exitT * (3 - 2 * state.exitT);
+      for (const c of panels) c.mesh.position.x = c.side * e * halfWidth * .5;
+      if (state.exitT >= 1) { state.gone = true; dispatchEvent(new Event('cloth-gone')); }
+    }
     for (const c of panels) c.cloth.setRest(halfWidth, state.current);
     acc += dt;
     while (acc >= 1 / 60) { for (const c of panels) c.cloth.step(1 / 60, t, state.movement, state.sens); acc -= 1 / 60; }
@@ -1452,7 +1464,8 @@ initCloth();
         .to('.intro-inner', { opacity: 0, y: -24, duration: .55, ease: 'power3.in' }, '+=.15');
       if (cloth) {
         tl.add(() => cloth.open(), '-=.15')
-          .to(intro, { opacity: 0, duration: .9, ease: 'power2.inOut', onStart: () => { intro.style.pointerEvents = 'none'; }, onComplete: () => { cloth.dispose(); intro.remove(); } }, '<1.7');
+          .add(() => { intro.style.pointerEvents = 'none'; }, '<');
+        addEventListener('cloth-gone', () => { cloth.dispose(); if (intro.isConnected) intro.remove(); }, { once: true });
       } else {
         tl.to('.curtain.l', { xPercent: -100, scaleX: .8, duration: 1.7, ease: 'power3.inOut' }, '-=.15')
           .to('.curtain.r', { xPercent: 100, scaleX: .8, duration: 1.7, ease: 'power3.inOut' }, '<');
