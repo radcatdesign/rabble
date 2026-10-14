@@ -105,7 +105,7 @@ a,button{-webkit-tap-highlight-color:transparent}
 @keyframes fadeUp{to{opacity:0;transform:translateY(-24px)}}
 @keyframes introGone{to{visibility:hidden}}
 .intro-bar{width:150px;height:2px;border-radius:2px;background:var(--line);overflow:hidden}
-.intro-bar span{display:block;height:100%;background:var(--grad);transform-origin:0 50%;transform:scaleX(0);animation:bar 1.6s var(--ease) .2s forwards}
+.intro-bar span{display:block;height:100%;background:#fff;transform-origin:0 50%;transform:scaleX(0);animation:bar 1.6s var(--ease) .2s forwards}
 .intro-meta{font:500 11px/1 var(--f-mono);letter-spacing:.24em;text-transform:uppercase;color:color-mix(in srgb,var(--text) 70%,transparent)}
 .intro-bar{background:rgba(255,255,255,.14)}
 @keyframes bar{to{transform:scaleX(1)}}
@@ -214,9 +214,10 @@ main{position:relative;z-index:1}
     radial-gradient(circle at center,rgba(90,160,255,.9) 0 8%,rgba(90,160,255,0) 30%) 0 0/57px 83px;
   animation:tileGlint 7s linear infinite}
 .lg-shine{-webkit-mask:var(--logo) center/contain no-repeat;mask:var(--logo) center/contain no-repeat;
-  background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.75) 50%,transparent 58%) 100% 0/300% 100% no-repeat;animation:shine 6s ease-in-out infinite}
+  background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.75) 50%,transparent 58%) 100% 0/300% 100% no-repeat}
+.hero-title:hover .lg-shine{animation:shine .9s cubic-bezier(.4,0,.2,1)}
 @keyframes tileGlint{to{background-position:46px 104px,-142px 63px,114px -166px}}
-@keyframes shine{0%,22%{background-position:100% 0}64%,100%{background-position:0 0}}
+@keyframes shine{from{background-position:100% 0}to{background-position:0 0}}
 .meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:0;font:500 12px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .meta .tag{padding:6px 9px;border-radius:5px;background:var(--grad);color:var(--white);letter-spacing:.16em}
 .meta i{width:4px;height:4px;border-radius:50%;background:var(--dim)}
@@ -234,7 +235,7 @@ main{position:relative;z-index:1}
 .statement > .wrap{position:relative;z-index:1}
 .trail{position:absolute;inset:0;z-index:0;pointer-events:none}
 .trail img{position:absolute;top:0;left:0;width:clamp(160px,16vw,260px);height:auto;border-radius:6px;opacity:0;will-change:transform,opacity;
-  box-shadow:0 30px 70px -24px color-mix(in srgb,var(--ink) 95%,transparent),0 0 0 1px color-mix(in srgb,var(--white) 6%,transparent)}
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--white) 8%,transparent)}
 .trail img.p{width:clamp(112px,11vw,180px)}
 .statement-grid{display:grid;grid-template-columns:minmax(150px,1fr) minmax(0,4fr);gap:28px clamp(24px,4vw,64px)}
 .statement-grid .label{align-self:start;padding-top:.9em}
@@ -286,6 +287,14 @@ main{position:relative;z-index:1}
   padding:clamp(20px,3vw,40px);pointer-events:none;transition:opacity .6s}
 .ep:not(.is-active) .ep-info{opacity:.45}
 .ep-copy{display:grid;gap:10px;max-width:48ch;pointer-events:none}
+.ep-notify{position:relative;display:flex;gap:6px;width:min(100%,400px);padding:5px;border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 22%,transparent);background:color-mix(in srgb,var(--ink) 72%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:border-color .3s,box-shadow .3s}
+.ep.is-active .ep-notify{pointer-events:auto}
+.ep-notify:focus-within{border-color:var(--magenta);box-shadow:0 0 0 3px color-mix(in srgb,var(--magenta) 22%,transparent)}
+.ep-notify input{flex:1;min-width:0;padding:0 14px;border:0;outline:none;background:transparent;color:var(--text);font:400 15px/1 var(--f-body)}
+.ep-notify input::placeholder{color:var(--dim)}
+.ep-notify .btn svg{width:15px;height:15px}
+.ep-note{position:absolute;left:16px;top:calc(100% + 8px);margin:0;font-size:13px;color:var(--muted);white-space:nowrap}
+.ep-note.ok{color:var(--cyan)}.ep-note.err{color:var(--magenta-soft)}
 .ep-eyebrow{margin:0 0 2px;font:500 12px/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--magenta-soft)}
 .ep-guest{margin:0;font:900 clamp(2.6rem,5.5vw,5.4rem)/.84 var(--f-display);text-transform:uppercase;text-wrap:balance}
 .ep-copy p{margin:0;font-size:clamp(.95rem,1.15vw,1.05rem);line-height:1.55;color:color-mix(in srgb,var(--text) 84%,transparent)}
@@ -311,9 +320,10 @@ main{position:relative;z-index:1}
 .host-name.base span{color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--text) 22%,transparent)}
 .host-name.lit span{background:linear-gradient(100deg,var(--white),var(--magenta-soft) 40%,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
 .host-name.lit{-webkit-mask-image:radial-gradient(circle var(--r) at var(--x) var(--y),#000 25%,transparent 75%);mask-image:radial-gradient(circle var(--r) at var(--x) var(--y),#000 25%,transparent 75%)}
-.host-figure{position:absolute;bottom:0;left:38%;height:min(94%,920px);aspect-ratio:1274/1847;transform:translateX(-50%);pointer-events:none}
-.host-figure img{display:block;width:100%;height:100%;object-fit:contain;object-position:bottom;
+.host-figure{position:absolute;bottom:0;left:38%;height:min(94%,920px);width:min(62vw,980px);transform:translateX(-50%);pointer-events:none}
+.host-figure img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;object-position:50% 100%;opacity:0;transform:scale(.94) translateY(18px);transform-origin:50% 100%;transition:opacity .3s ease,transform .55s var(--ease);
   -webkit-mask-image:linear-gradient(180deg,#000 82%,transparent 100%);mask-image:linear-gradient(180deg,#000 82%,transparent 100%)}
+.host-figure img.is-on{opacity:1;transform:none}
 .host-copy{position:relative;z-index:1;display:flex;justify-content:flex-end}
 .host-card{display:grid;gap:16px;max-width:420px;padding:clamp(22px,3vw,34px);border-radius:20px;border:1px solid var(--line);
   background:color-mix(in srgb,var(--ink) 62%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
@@ -324,7 +334,7 @@ main{position:relative;z-index:1}
   .host-visual{position:relative;inset:auto;height:clamp(460px,128vw,700px)}
   .host-name{justify-content:flex-start;padding-top:72px}
   .host-name span:last-child{align-self:flex-start}
-  .host-figure{left:62%;height:74%}
+  .host-figure{left:56%;height:74%;width:92vw}
   .host-copy{justify-content:stretch;margin-top:-48px}
 }
 
@@ -531,6 +541,11 @@ main{position:relative;z-index:1}
               <h3 class="ep-guest">Guest Name</h3>
               <p>The next guest takes the couch, and the mugs come out. Get on the list and you'll hear the moment it drops.</p>
             </div>
+            <form class="ep-notify" novalidate>
+              <input type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" aria-label="Email to get notified about Episode 2" required>
+              <button class="btn btn-primary btn-sm" type="submit"><svg aria-hidden="true"><use href="#mail"/></svg>Notify me</button>
+              <p class="ep-note" role="status" aria-live="polite">Subscribe to get notified when it drops.</p>
+            </form>
           </div>
         </article>
         <article class="ep" aria-roledescription="slide" aria-label="More episodes, 3 of 3">
@@ -552,7 +567,13 @@ main{position:relative;z-index:1}
     <div class="host-visual">
       <p class="host-name base" aria-hidden="true"><span>Katie</span><span>Martell</span></p>
       <p class="host-name lit" aria-hidden="true"><span>Katie</span><span>Martell</span></p>
-      <div class="host-figure"><img src="media/katie-cutout.webp" alt="Katie Martell laughing at the mic in a red suit" width="1274" height="1847" decoding="async" loading="lazy"></div>
+      <div class="host-figure">
+        <img class="is-on" src="media/katie-1.webp" alt="Katie Martell laughing at the mic in a red suit" width="1035" height="1500" decoding="async">
+        <img src="media/katie-2.webp" alt="" width="667" height="1117" decoding="async">
+        <img src="media/katie-3.webp" alt="" width="988" height="578" decoding="async">
+        <img src="media/katie-4.webp" alt="" width="741" height="806" decoding="async">
+        <img src="media/katie-5.webp" alt="" width="920" height="1148" decoding="async">
+      </div>
     </div>
     <div class="wrap host-copy">
       <div class="host-card" data-reveal>
@@ -938,6 +959,7 @@ initCloth();
     prevB.addEventListener('click', () => go(epsIndex - 1));
     nextB.addEventListener('click', () => go(epsIndex + 1));
     eps.addEventListener('keydown', e => {
+      if (e.target.closest('input')) return;
       if (e.key === 'ArrowRight') { go(epsIndex + 1); e.preventDefault(); }
       else if (e.key === 'ArrowLeft') { go(epsIndex - 1); e.preventDefault(); }
     });
@@ -945,6 +967,7 @@ initCloth();
     let down = null, moved = false, suppress = false;
     vp.addEventListener('pointerdown', e => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (e.target.closest('form')) return;
       down = { x: e.clientX, y: e.clientY, start: x, t: performance.now(), id: e.pointerId };
       moved = false;
     });
@@ -1082,6 +1105,13 @@ initCloth();
   }));
 
   /* ---------- signup form ---------- */
+  $$('.ep-notify').forEach(f => f.addEventListener('submit', e => {
+    e.preventDefault();
+    const inp = $('input', f), n = $('.ep-note', f);
+    n.classList.remove('ok', 'err');
+    if (!inp.value.trim() || !inp.checkValidity()) { n.textContent = 'That email looks off. Try again.'; n.classList.add('err'); inp.focus(); return; }
+    n.textContent = "You're on the list. We'll ping you when it drops."; n.classList.add('ok'); f.reset();
+  }));
   const form = $('#joinForm'), note = $('#formNote'), email = $('#email');
   form.addEventListener('submit', e => {
     e.preventDefault();
@@ -1517,7 +1547,16 @@ initCloth();
   /* host: the name slides apart and Katie rises a touch faster, for depth */
   gsap.fromTo('.host-name span:first-child', { xPercent: -8 }, { xPercent: 6, ease: 'none', scrollTrigger: { trigger: '.host', start: 'top bottom', end: 'bottom top', scrub: true } });
   gsap.fromTo('.host-name span:last-child', { xPercent: 8 }, { xPercent: -6, ease: 'none', scrollTrigger: { trigger: '.host', start: 'top bottom', end: 'bottom top', scrub: true } });
-  gsap.fromTo('.host-figure img', { yPercent: 8 }, { yPercent: 0, ease: 'none', scrollTrigger: { trigger: '.host', start: 'top bottom', end: 'center center', scrub: true } });
+  gsap.fromTo('.host-figure', { yPercent: 8 }, { yPercent: 0, ease: 'none', scrollTrigger: { trigger: '.host', start: 'top bottom', end: 'center center', scrub: true } });
+  /* host: Katie strikes a new pose as you scroll through */
+  (() => {
+    const poses = $$('.host-figure img'); let cur = 0;
+    ScrollTrigger.create({ trigger: '.host', start: 'top 70%', end: 'bottom 30%', onUpdate(self) {
+      const i = Math.min(poses.length - 1, Math.floor(self.progress * poses.length));
+      if (i === cur) return;
+      poses[cur].classList.remove('is-on'); poses[i].classList.add('is-on'); cur = i;
+    } });
+  })();
 
   /* footer sign rises */
   gsap.from('.disco-wrap', { yPercent: 40, opacity: .2, ease: 'none', scrollTrigger: { trigger: '.foot', start: 'top bottom', end: 'top 40%', scrub: true } });
