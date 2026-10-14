@@ -215,7 +215,7 @@ main{position:relative;z-index:1}
   animation:tileGlint 7s linear infinite}
 .lg-shine{-webkit-mask:var(--logo) center/contain no-repeat;mask:var(--logo) center/contain no-repeat;
   background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.75) 50%,transparent 58%) 100% 0/300% 100% no-repeat}
-.hero-title:hover .lg-shine{animation:shine .9s cubic-bezier(.4,0,.2,1)}
+.hero-title:hover .lg-shine{animation:shine 2s cubic-bezier(.4,0,.2,1)}
 @keyframes tileGlint{to{background-position:46px 104px,-142px 63px,114px -166px}}
 @keyframes shine{from{background-position:100% 0}to{background-position:0 0}}
 .meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;margin:0;font:500 12px/1 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
@@ -343,10 +343,12 @@ main{position:relative;z-index:1}
 .join-card{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:center;gap:36px clamp(32px,5vw,80px);
   padding:clamp(28px,5vw,72px);border-radius:clamp(20px,2.4vw,32px);border:1px solid transparent;
   background:linear-gradient(var(--ink-2),var(--ink-2)) padding-box,
-             linear-gradient(120deg,color-mix(in srgb,var(--magenta) 75%,transparent),color-mix(in srgb,var(--text) 12%,transparent) 45%,color-mix(in srgb,var(--blue) 75%,transparent)) border-box;
+             linear-gradient(transparent,transparent) border-box;
   box-shadow:0 40px 90px -40px color-mix(in srgb,var(--ink) 95%,transparent)}
 .join-card{position:relative;overflow:hidden;isolation:isolate}
-.join-card::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;
+.join-border{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);z-index:2;pointer-events:none;overflow:visible}
+.join-border rect{fill:none;stroke:url(#joinStroke);stroke-width:1.5;vector-effect:non-scaling-stroke}
+.join-card::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;opacity:var(--bg-o,1);
   background:linear-gradient(90deg,rgba(13,11,22,.93) 0%,rgba(13,11,22,.8) 50%,rgba(13,11,22,.66) 100%),url("media/join-crowd.jpg") center 40%/cover no-repeat;filter:saturate(.85)}
 .join-copy{display:grid;gap:20px}
 .join-title{margin:0;font:900 clamp(3.2rem,7vw,7rem)/1 var(--f-display);text-transform:uppercase}
@@ -571,7 +573,6 @@ main{position:relative;z-index:1}
         <img class="is-on" src="media/katie-1.webp" alt="Katie Martell laughing at the mic in a red suit" width="1035" height="1500" decoding="async">
         <img src="media/katie-2.webp" alt="" width="667" height="1117" decoding="async">
         <img src="media/katie-3.webp" alt="" width="988" height="578" decoding="async">
-        <img src="media/katie-4.webp" alt="" width="741" height="806" decoding="async">
         <img src="media/katie-5.webp" alt="" width="920" height="1148" decoding="async">
       </div>
     </div>
@@ -586,7 +587,8 @@ main{position:relative;z-index:1}
 
   <section class="join" id="join" aria-labelledby="join-title">
     <div class="wrap">
-      <div class="join-card" data-reveal>
+      <div class="join-card">
+        <svg class="join-border" aria-hidden="true"><defs><linearGradient id="joinStroke" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff2d95" stop-opacity=".9"/><stop offset=".45" stop-color="#f4f0fb" stop-opacity=".25"/><stop offset="1" stop-color="#2f86ff" stop-opacity=".9"/></linearGradient></defs><rect x=".75" y=".75" width="100%" height="100%" pathLength="100"/></svg>
         <div class="join-copy">
           <p class="label"><svg aria-hidden="true"><use href="#spark"/></svg>Stay in the loop</p>
           <h2 class="join-title" id="join-title">Join the <span class="grad-text">rabble</span></h2>
@@ -670,8 +672,7 @@ class Cloth {
         const j = i * 3, v = Math.floor(i / (COLS + 1)) / ROWS;
         let brush = 0;
         if (sens > 0) {
-          if (this.hover) { const d2 = (r[j] - this.hover.x) ** 2 + (r[j + 1] - this.hover.y) ** 2; brush = -1.15 * Math.exp(-d2 / 3.4); }
-          for (const w of this.wake) { const d = Math.hypot(r[j] - w.x, r[j + 1] - w.y), ring = d - w.age * 3.2; brush += .09 * Math.sin(ring * 3.2) * Math.exp(-ring * ring / 2.5) * Math.exp(-w.age * 2.5); }
+          if (this.hover) { const d2 = (r[j] - this.hover.x) ** 2 + (r[j + 1] - this.hover.y) ** 2; brush = -.55 * Math.exp(-d2 / 1.6); }
           brush = Math.max(-1.6, Math.min(.5, brush)) * sens * Math.min(v * 6, 1);
         }
         for (let axis = 0; axis < 3; axis++) {
@@ -1543,6 +1544,26 @@ initCloth();
   $$('[data-reveal]').forEach(el => {
     gsap.from(el, { y: 60, opacity: .15, duration: 1.4, ease: 'expo.out', scrollTrigger: { trigger: el, start: 'top 90%', once: true } });
   });
+
+  /* signup card: the border traces itself, then the photo and content arrive */
+  (() => {
+    const card = $('.join-card'); if (!card) return;
+    const svg = $('.join-border', card), rect = $('rect', svg);
+    const fit = () => {
+      const r = parseFloat(getComputedStyle(card).borderTopLeftRadius) || 24;
+      rect.setAttribute('width', Math.max(0, svg.clientWidth - 1.5)); rect.setAttribute('height', Math.max(0, svg.clientHeight - 1.5));
+      rect.setAttribute('rx', r); rect.setAttribute('ry', r);
+    };
+    fit(); new ResizeObserver(fit).observe(card);
+    const bits = [...card.querySelectorAll('.join-copy > *, .join-side')];
+    gsap.set(rect, { strokeDasharray: 100, strokeDashoffset: 100 });
+    gsap.set(card, { '--bg-o': 0 });
+    gsap.set(bits, { y: 34, opacity: 0 });
+    gsap.timeline({ scrollTrigger: { trigger: card, start: 'top 82%', once: true } })
+      .to(rect, { strokeDashoffset: 0, duration: 1.6, ease: 'power2.inOut' })
+      .to(card, { '--bg-o': 1, duration: 1.2, ease: 'power2.out' }, .5)
+      .to(bits, { y: 0, opacity: 1, duration: 1.1, stagger: .09, ease: 'expo.out' }, .7);
+  })();
 
   /* host: the name slides apart and Katie rises a touch faster, for depth */
   gsap.fromTo('.host-name span:first-child', { xPercent: -8 }, { xPercent: 6, ease: 'none', scrollTrigger: { trigger: '.host', start: 'top bottom', end: 'bottom top', scrub: true } });
