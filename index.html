@@ -1573,7 +1573,7 @@ initCloth();
   (() => {
     const poses = $$('.host-figure img'); let cur = 0;
     ScrollTrigger.create({ trigger: '.host', start: 'top 70%', end: 'bottom 30%', onUpdate(self) {
-      const i = Math.min(poses.length - 1, Math.floor(self.progress * poses.length));
+      const i = Math.min(poses.length - 1, Math.floor(Math.min(1, self.progress / .6) * poses.length));
       if (i === cur) return;
       poses[cur].classList.remove('is-on'); poses[i].classList.add('is-on'); cur = i;
     } });
