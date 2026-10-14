@@ -84,16 +84,21 @@ a,button{-webkit-tap-highlight-color:transparent}
 .btn-sm{--h:40px;padding:0 18px;font-size:14px}
 
 /* loader: velvet stage curtains that part once the page is ready */
-.intro{position:fixed;inset:0;z-index:200;display:grid;place-items:center;overflow:hidden;animation:introGone 0s linear 4.3s forwards}
+.intro{position:fixed;inset:0;z-index:200;background:#080711;display:grid;place-items:center;overflow:hidden;animation:introGone 0s linear 12.5s forwards}
 .curtain{position:absolute;top:0;bottom:0;width:51%;will-change:transform;
   background:
     radial-gradient(ellipse 70% 45% at 50% 0%,color-mix(in srgb,var(--magenta) 22%,transparent),transparent 70%),
     linear-gradient(180deg,rgba(0,0,0,.55) 0%,transparent 22%,transparent 68%,rgba(0,0,0,.7) 100%),
     repeating-linear-gradient(90deg,var(--velvet-deep) 0,var(--velvet) calc(var(--fold)*.24),var(--velvet-hi) calc(var(--fold)*.42),var(--velvet) calc(var(--fold)*.6),var(--velvet-deep) calc(var(--fold)*.86),#120007 var(--fold))}
-.curtain.l{left:0;transform-origin:0 50%;box-shadow:inset -40px 0 60px rgba(0,0,0,.65);animation:curL 1.6s cubic-bezier(.65,0,.35,1) 2.5s forwards}
-.curtain.r{right:0;transform-origin:100% 50%;box-shadow:inset 40px 0 60px rgba(0,0,0,.65);animation:curR 1.6s cubic-bezier(.65,0,.35,1) 2.5s forwards}
+.curtain.l{left:0;transform-origin:0 50%;box-shadow:inset -40px 0 60px rgba(0,0,0,.65);animation:curL 1.6s cubic-bezier(.65,0,.35,1) 10.8s forwards}
+.curtain.r{right:0;transform-origin:100% 50%;box-shadow:inset 40px 0 60px rgba(0,0,0,.65);animation:curR 1.6s cubic-bezier(.65,0,.35,1) 10.8s forwards}
+.cloth-canvas{position:absolute;inset:0;z-index:1;width:100%!important;height:100%!important;display:block;opacity:0;transition:opacity .5s ease;touch-action:none;cursor:grab}
+.cloth-canvas.is-live{opacity:1}
+.curtain{visibility:hidden}
+.intro.no-cloth .curtain{visibility:visible}
+.intro-inner{pointer-events:none}
 .intro::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 34% 40% at 50% 52%,rgba(255,215,235,.16),transparent 70%)}
-.intro-inner{position:relative;z-index:3;display:grid;justify-items:center;gap:30px;animation:fadeUp .6s ease-in 2.15s forwards}
+.intro-inner{position:relative;z-index:3;display:grid;justify-items:center;gap:30px;animation:fadeUp .6s ease-in 10.4s forwards}
 .intro .logo{width:min(250px,56vw);filter:drop-shadow(0 0 34px color-mix(in srgb,var(--blue) 50%,transparent)) drop-shadow(0 18px 40px rgba(0,0,0,.6))}
 @keyframes curL{to{transform:translateX(-100%) scaleX(.8)}}
 @keyframes curR{to{transform:translateX(100%) scaleX(.8)}}
@@ -592,7 +597,7 @@ main{position:relative;z-index:1}
 
 <script type="module">
 /* Curtain Call cloth: Verlet suede panels with hover ripples and pull, used as the loader's curtains. */
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+import * as THREE from './vendor/three.module.js';
 window.THREE = THREE;
 dispatchEvent(new Event('three-ready'));
 
@@ -690,9 +695,11 @@ class Cloth {
 
 function initCloth() {
   const intro = document.querySelector('.intro');
-  if (!intro || window.rrOpening || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const fail = () => dispatchEvent(new Event('cloth-failed'));
+  if (!intro || window.rrOpening || matchMedia('(prefers-reduced-motion: reduce)').matches) return fail();
   let renderer;
-  try { renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' }); } catch (e) { return; }
+  try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' }); } catch (e) { return fail(); }
+  if (!renderer.getContext()) return fail();
   const canvas = renderer.domElement; canvas.className = 'cloth-canvas';
   intro.insertBefore(canvas, intro.querySelector('.intro-inner'));
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -811,14 +818,20 @@ function initCloth() {
       beam.material.uniforms.strength.value = state.intensity * .1;
     });
     renderer.render(scene, camera);
-    if (first) { first = false; canvas.classList.add('is-live'); setTimeout(() => intro.classList.add('has-cloth'), 650); }
+    if (first) { first = false; canvas.classList.add('is-live'); dispatchEvent(new Event('cloth-ready')); }
   };
   frame();
 
   window.rrCloth = {
     live: true,
-    open() { intro.classList.add('has-cloth'); state.open = 1; for (const c of panels) { c.cloth.grabs.clear(); c.cloth.hover = null; } touches.clear(); },
-    dispose() { cancelAnimationFrame(raf); removeEventListener('resize', resize); renderer.dispose(); suede.dispose(); nap.dispose(); scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material.dispose) o.material.dispose(); }); canvas.remove(); }
+    open() {
+      // the stage drops away so the site shows through as the panels part
+      scene.background = null; scene.fog = null; renderer.setClearColor(0x000000, 0);
+      [floor, backdrop, ...beams].forEach(o => { o.visible = false; });
+      scene.traverse(o => { if (o.isMesh && o.geometry && o.geometry.type === 'SphereGeometry') o.visible = false; });
+      intro.style.background = 'transparent';
+      state.open = 1; for (const c of panels) { c.cloth.grabs.clear(); c.cloth.hover = null; } touches.clear(); },
+    dispose() { if (this.gone) return; this.gone = true; cancelAnimationFrame(raf); removeEventListener('resize', resize); renderer.dispose(); suede.dispose(); nap.dispose(); scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material.dispose) o.material.dispose(); }); canvas.remove(); }
   };
 }
 initCloth();
@@ -1404,7 +1417,7 @@ initCloth();
   }
 
   /* loader: hold on the curtains until the page is ready, then part them */
-  if (intro && performance.now() > 2400) {
+  if (intro && performance.now() > 10400) {
     // scripts arrived after the CSS fallback already opened the curtains
     intro.remove();
     gsap.from('.hero-anim', { y: 40, opacity: 0, duration: 1.2, stagger: .07, ease: 'expo.out' });
@@ -1423,17 +1436,23 @@ initCloth();
       heroVideo.addEventListener('canplay', r, { once: true });
       heroVideo.addEventListener('error', r, { once: true });
     });
-    const ready = Promise.race([Promise.all([pageLoaded, fontsLoaded, videoReady]), new Promise(r => setTimeout(r, 6000))]);
+    const clothReady = new Promise(r => {
+      if (window.rrCloth && window.rrCloth.live) return r();
+      addEventListener('cloth-ready', r, { once: true });
+      addEventListener('cloth-failed', () => { intro.classList.add('no-cloth'); r(); }, { once: true });
+    });
+    const ready = Promise.race([Promise.all([pageLoaded, fontsLoaded, videoReady, clothReady]), new Promise(r => setTimeout(r, 10000))]);
     const openCurtains = () => {
       bar.kill();
       window.rrOpening = true;
       const cloth = window.rrCloth && window.rrCloth.live ? window.rrCloth : null;
-      const tl = gsap.timeline({ onComplete: () => { if (cloth) cloth.dispose(); intro.remove(); if (lenis) lenis.start(); } })
+      if (!cloth) intro.classList.add('no-cloth');
+      const tl = gsap.timeline({ onComplete: () => { if (intro.isConnected) intro.remove(); if (lenis) lenis.start(); } })
         .to('.intro-bar span', { scaleX: 1, duration: .35, ease: 'power2.out' })
         .to('.intro-inner', { opacity: 0, y: -24, duration: .55, ease: 'power3.in' }, '+=.15');
       if (cloth) {
         tl.add(() => cloth.open(), '-=.15')
-          .to(intro, { opacity: 0, duration: 1, ease: 'power2.inOut' }, '<2');
+          .to(intro, { opacity: 0, duration: .9, ease: 'power2.inOut', onStart: () => { intro.style.pointerEvents = 'none'; }, onComplete: () => { cloth.dispose(); intro.remove(); } }, '<1.7');
       } else {
         tl.to('.curtain.l', { xPercent: -100, scaleX: .8, duration: 1.7, ease: 'power3.inOut' }, '-=.15')
           .to('.curtain.r', { xPercent: 100, scaleX: .8, duration: 1.7, ease: 'power3.inOut' }, '<');
