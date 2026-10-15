@@ -356,15 +356,14 @@ main{position:relative;z-index:1}
 .join-title{margin:0;font:900 clamp(3.2rem,7vw,7rem)/1 var(--f-display);text-transform:uppercase}
 .join-copy > p:last-child{margin:0;max-width:40ch;font-size:clamp(1.05rem,1.3vw,1.18rem);color:color-mix(in srgb,var(--text) 84%,transparent)}
 .join-side{display:grid;gap:22px;min-width:0}
-.join-card .field{padding:8px;background:var(--ink)}
-.join-card .field input{font-size:17px}
+.join-card .field input{font-size:17px;background:var(--ink)}
 .join-card .field .btn{--h:56px;padding:0 30px;font-size:16px}
 .join-form{display:grid;gap:12px;min-width:0}
 .join-form label{font:500 11px/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
-.field{display:flex;gap:8px;padding:7px;border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 18%,transparent);background:color-mix(in srgb,var(--ink) 72%,transparent);
-  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);transition:border-color .3s,box-shadow .4s}
-.field:focus-within{border-color:var(--magenta);box-shadow:0 0 0 4px color-mix(in srgb,var(--magenta) 22%,transparent)}
-.field input{flex:1;min-width:0;padding:0 18px;border:0;outline:none;background:transparent;color:var(--text);font:400 16px/1 var(--f-body)}
+.field{display:flex;gap:10px}
+.field input{flex:1;min-width:0;height:56px;padding:0 24px;border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 18%,transparent);outline:none;
+  background:color-mix(in srgb,var(--ink) 72%,transparent);color:var(--text);font:400 16px/1 var(--f-body);transition:border-color .3s,box-shadow .4s}
+.field input:focus{border-color:var(--magenta);box-shadow:0 0 0 4px color-mix(in srgb,var(--magenta) 22%,transparent)}
 .field input::placeholder{color:var(--dim)}
 .form-note{margin:0;min-height:1.5em;font-size:14px;color:var(--muted)}
 .form-note.ok{color:var(--cyan)}
@@ -373,7 +372,7 @@ main{position:relative;z-index:1}
 .yt-link:hover{color:var(--magenta-soft);border-bottom-color:var(--magenta)}
 .yt-link svg{width:18px;height:18px;fill:currentColor}
 @media (max-width:900px){.join-card{grid-template-columns:1fr}}
-@media (max-width:480px){.field{flex-direction:column;border-radius:22px}.field input{height:48px}.field .btn{width:100%}}
+@media (max-width:480px){.field{flex-direction:column;gap:12px}.field input{flex:none;height:54px}.field .btn{width:100%}}
 
 /* footer */
 .foot{position:relative;background:var(--ink);border-top:1px solid var(--line);padding-top:clamp(20px,2.5vw,36px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 28px);overflow:hidden}
