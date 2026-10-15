@@ -297,6 +297,12 @@ main{position:relative;z-index:1}
 .ep-note.ok{color:var(--cyan)}.ep-note.err{color:var(--magenta-soft)}
 .ep-copy .ep-note{font-size:13px;line-height:1.3;color:var(--muted)}
 .ep-copy .ep-note.ok{color:var(--cyan)}.ep-copy .ep-note.err{color:var(--magenta-soft)}
+.ep-more{display:inline-flex;align-items:center;gap:8px;justify-self:start;margin-top:6px;padding-bottom:4px;pointer-events:none;font:600 14px/1 var(--f-body);color:var(--text);
+  border-bottom:1px solid color-mix(in srgb,var(--magenta) 60%,transparent);transition:color .3s,border-color .3s}
+.ep.is-active .ep-more{pointer-events:auto}
+.ep-more svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .45s var(--ease)}
+.ep-more:hover{color:var(--magenta-soft);border-bottom-color:var(--magenta)}
+.ep-more:hover svg{transform:translateX(4px)}
 .ep-eyebrow{margin:0 0 2px;font:500 12px/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--magenta-soft)}
 .ep-guest{margin:0;font:900 clamp(2.6rem,5.5vw,5.4rem)/.84 var(--f-display);text-transform:uppercase;text-wrap:balance}
 .ep-copy p{margin:0;font-size:clamp(.95rem,1.15vw,1.05rem);line-height:1.55;color:color-mix(in srgb,var(--text) 84%,transparent)}
@@ -531,6 +537,7 @@ main{position:relative;z-index:1}
               <p class="ep-eyebrow">Episode 01</p>
               <h3 class="ep-guest">Guest Name</h3>
               <p>Katie opens the series on the couch with her first guest, then takes the stage under the neon in front of a live crowd. Forty-one minutes of real talk, big laughs, and the questions most hosts skip.</p>
+              <a class="ep-more" href="episode-1.html">Episode details<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
             </div>
           </div>
         </article>
@@ -1504,6 +1511,10 @@ initCloth();
         .to('.hero-anim', { y: 0, opacity: 1, duration: 1.3, stagger: .08, ease: 'expo.out' }, '<.5');
     };
     ready.then(() => setTimeout(openCurtains, Math.max(0, 1500 - (performance.now() - t0))));
+  } else {
+    // pages without the curtain loader: the title card simply rises in
+    gsap.from('.hero-media', { scale: 1.12, duration: 2.4, ease: 'expo.out' });
+    gsap.from('.hero-anim', { y: 46, opacity: 0, duration: 1.3, stagger: .08, ease: 'expo.out', delay: .15 });
   }
 
   /* progress bar */
@@ -1514,7 +1525,7 @@ initCloth();
   gsap.to('.hero-content', { yPercent: -14, opacity: .25, ease: 'none', scrollTrigger: { trigger: '.hero', start: '30% top', end: 'bottom top', scrub: true } });
 
   /* episodes: the carousel slides in from the right as the section arrives */
-  gsap.fromTo('.eps-viewport', { x: () => innerWidth * .2 }, { x: 0, ease: 'none', scrollTrigger: { trigger: '.episodes', start: 'top bottom', end: 'top 20%', scrub: 1, invalidateOnRefresh: true } });
+  if ($('.episodes')) gsap.fromTo('.eps-viewport', { x: () => innerWidth * .2 }, { x: 0, ease: 'none', scrollTrigger: { trigger: '.episodes', start: 'top bottom', end: 'top 20%', scrub: 1, invalidateOnRefresh: true } });
 
   /* statement lights up word by word */
   function splitWords(root) {
@@ -1564,6 +1575,7 @@ initCloth();
   })();
 
   /* host: the name slides apart and Katie rises a touch faster, for depth */
+  if ($('.host')) {
   gsap.fromTo('.host-name span:first-child', { xPercent: -8 }, { xPercent: 6, ease: 'none', scrollTrigger: { trigger: '.host', start: 'top bottom', end: 'bottom top', scrub: true } });
   gsap.fromTo('.host-name span:last-child', { xPercent: 8 }, { xPercent: -6, ease: 'none', scrollTrigger: { trigger: '.host', start: 'top bottom', end: 'bottom top', scrub: true } });
   gsap.fromTo('.host-figure', { yPercent: 8 }, { yPercent: 0, ease: 'none', scrollTrigger: { trigger: '.host', start: 'top bottom', end: 'center center', scrub: true } });
@@ -1576,6 +1588,7 @@ initCloth();
       poses[cur].classList.remove('is-on'); poses[i].classList.add('is-on'); cur = i;
     } });
   })();
+  }
 
   /* footer sign rises */
   gsap.from('.disco-wrap', { yPercent: 40, opacity: .2, ease: 'none', scrollTrigger: { trigger: '.foot', start: 'top bottom', end: 'top 40%', scrub: true } });
