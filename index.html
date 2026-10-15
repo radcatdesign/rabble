@@ -354,8 +354,8 @@ main{position:relative;z-index:1}
              linear-gradient(transparent,transparent) border-box;
   box-shadow:0 40px 90px -40px color-mix(in srgb,var(--ink) 95%,transparent)}
 .join-card{position:relative;overflow:hidden;isolation:isolate}
-.join-border{position:absolute;inset:-1px;width:calc(100% + 2px);height:calc(100% + 2px);z-index:2;pointer-events:none;overflow:visible}
-.join-border rect{fill:none;stroke:url(#joinStroke);stroke-width:1.5;vector-effect:non-scaling-stroke}
+.join-border{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;overflow:visible}
+.join-border rect{fill:none;stroke:url(#joinStroke);stroke-width:3;vector-effect:non-scaling-stroke}
 .join-card::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;opacity:var(--bg-o,1);
   background:linear-gradient(90deg,rgba(13,11,22,.93) 0%,rgba(13,11,22,.8) 50%,rgba(13,11,22,.66) 100%),url("media/join-crowd.jpg") center 40%/cover no-repeat;filter:saturate(.85)}
 .join-copy{display:grid;gap:20px}
@@ -593,7 +593,7 @@ main{position:relative;z-index:1}
   <section class="join" id="join" aria-labelledby="join-title">
     <div class="wrap">
       <div class="join-card">
-        <svg class="join-border" aria-hidden="true"><defs><linearGradient id="joinStroke" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff2d95" stop-opacity=".9"/><stop offset=".45" stop-color="#f4f0fb" stop-opacity=".25"/><stop offset="1" stop-color="#2f86ff" stop-opacity=".9"/></linearGradient></defs><rect x=".75" y=".75" width="100%" height="100%" pathLength="100"/></svg>
+        <svg class="join-border" aria-hidden="true"><defs><linearGradient id="joinStroke" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff2d95" stop-opacity=".9"/><stop offset=".45" stop-color="#f4f0fb" stop-opacity=".5"/><stop offset="1" stop-color="#2f86ff" stop-opacity=".9"/></linearGradient></defs><rect x="1.5" y="1.5" width="100%" height="100%" pathLength="100"/></svg>
         <div class="join-copy">
           <p class="label"><svg aria-hidden="true"><use href="#spark"/></svg>Stay in the loop</p>
           <h2 class="join-title" id="join-title">Join the <span class="grad-text">rabble</span></h2>
@@ -1559,8 +1559,8 @@ initCloth();
     const card = $('.join-card'); if (!card) return;
     const svg = $('.join-border', card), rect = $('rect', svg);
     const fit = () => {
-      const r = parseFloat(getComputedStyle(card).borderTopLeftRadius) || 24;
-      rect.setAttribute('width', Math.max(0, svg.clientWidth - 1.5)); rect.setAttribute('height', Math.max(0, svg.clientHeight - 1.5));
+      const r = Math.max(0, (parseFloat(getComputedStyle(card).borderTopLeftRadius) || 24) - 2.5);
+      rect.setAttribute('width', Math.max(0, svg.clientWidth - 3)); rect.setAttribute('height', Math.max(0, svg.clientHeight - 3));
       rect.setAttribute('rx', r); rect.setAttribute('ry', r);
     };
     fit(); new ResizeObserver(fit).observe(card);
