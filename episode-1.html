@@ -403,6 +403,10 @@ main{position:relative;z-index:1}
 .foot-yt svg{width:20px;height:20px;fill:currentColor}
 @media (max-width:560px){.foot-row{grid-template-columns:auto 1fr auto;gap:12px}.foot-row .fine{font-size:9px;letter-spacing:.08em}}
 .fine{margin:0;font:500 11px/1.6 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.made-by{margin:22px auto 0;text-align:center;font:500 10px/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.made-by a{display:inline-flex;gap:.5em;padding:6px 2px;transition:color .3s}
+.made-by b{font-weight:500;color:var(--muted);transition:color .3s}
+.made-by a:hover,.made-by a:hover b{color:var(--magenta-soft)}
 
 /* player */
 .player{position:fixed;inset:0;z-index:120;display:grid;place-items:center;align-content:center;gap:18px;
@@ -633,6 +637,7 @@ main{position:relative;z-index:1}
     <p class="fine">© 2026 Rabble &amp; Rouse with Katie Martell</p>
     <a class="foot-yt" href="https://www.youtube.com/@RabbleandRouse" target="_blank" rel="noopener" aria-label="Rabble and Rouse on YouTube"><svg aria-hidden="true"><use href="#yt"/></svg></a>
   </div>
+  <p class="made-by wrap"><a href="https://radcat.design" target="_blank" rel="noopener">Website by <b>RADCAT</b></a></p>
 </footer>
 
 <div class="player" id="player" hidden role="dialog" aria-modal="true" aria-label="Episode 1 player">
