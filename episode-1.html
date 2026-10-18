@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Episode 01 · Rabble &amp; Rouse</title>
-<meta name="description" content="Rabble &amp; Rouse with Katie Martell, Season one, Episode 01. About the episode, full credits, and how to catch the next one.">
+<title>Episode 01: Cheryl Katon · Rabble &amp; Rouse</title>
+<meta name="description" content="Rabble &amp; Rouse with Katie Martell, Episode 01. Katie sits down with Cheryl Katon to discuss growing up trans, living authentically, and the cost of visibility.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -381,6 +381,63 @@ main{position:relative;z-index:1}
 @media (max-width:900px){.join-card{grid-template-columns:1fr}}
 @media (max-width:480px){.field{flex-direction:column;gap:12px}.field input{flex:none;height:54px}.field .btn{width:100%}}
 
+/* shared section title */
+.sec-title{margin:0;font:900 clamp(3rem,7vw,6.6rem)/.88 var(--f-display);text-transform:uppercase;text-wrap:balance}
+
+/* how to watch + connect */
+.listen{position:relative;padding-block:clamp(90px,11vw,170px) clamp(80px,9vw,140px)}
+.listen-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:24px 48px;margin-bottom:clamp(32px,4vw,56px)}
+.listen-head > div{display:grid;gap:18px}
+.listen-sub{margin:0;max-width:40ch;font-size:clamp(1.02rem,1.25vw,1.15rem);color:color-mix(in srgb,var(--text) 80%,transparent)}
+.platforms{display:grid;grid-template-columns:1.5fr repeat(4,minmax(0,1fr));gap:clamp(10px,1.2vw,16px)}
+.plat{position:relative;display:grid;align-content:space-between;gap:28px;min-height:clamp(170px,15vw,220px);padding:clamp(18px,1.8vw,26px);border-radius:20px;text-align:left;cursor:pointer;
+  border:1px solid var(--line);background:color-mix(in srgb,var(--ink-2) 78%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:var(--text);font:inherit;
+  transition:transform .6s var(--ease),border-color .4s,background-color .4s,box-shadow .6s var(--ease)}
+.plat:hover,.plat:focus-visible{transform:translateY(-4px);border-color:color-mix(in srgb,var(--magenta) 70%,transparent);background-color:color-mix(in srgb,var(--ink-3) 80%,transparent);
+  box-shadow:0 26px 60px -30px color-mix(in srgb,var(--magenta) 70%,transparent)}
+.plat-ic{display:grid;place-items:center;width:52px;height:52px;border-radius:14px;background:color-mix(in srgb,var(--text) 8%,transparent);transition:background .5s}
+.plat-ic svg{width:26px;height:26px;fill:currentColor}
+.plat:hover .plat-ic{background:var(--grad)}
+.plat-name{display:block;font:800 clamp(1.5rem,2vw,2rem)/1 var(--f-display);text-transform:uppercase}
+.plat-sub{display:block;margin-top:8px;font:500 11px/1.3 var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.plat > .plat-name{align-self:end}
+.plat{grid-template-rows:auto 1fr auto}
+.plat-go{position:absolute;top:clamp(18px,1.8vw,26px);right:clamp(18px,1.8vw,26px);width:20px;height:20px;color:var(--muted);transition:transform .5s var(--ease),color .3s}
+.plat:hover .plat-go{transform:translate(3px,-3px);color:var(--text)}
+.plat-yt{background:linear-gradient(135deg,color-mix(in srgb,var(--magenta) 30%,transparent),color-mix(in srgb,var(--blue) 18%,transparent)),color-mix(in srgb,var(--ink-2) 80%,transparent);border-color:color-mix(in srgb,var(--magenta) 40%,transparent)}
+.plat-yt .plat-ic{background:var(--grad)}
+.plat.is-copied{border-color:var(--cyan)}
+.plat.is-copied .plat-sub{color:var(--cyan)}
+.connect{display:flex;flex-wrap:wrap;align-items:center;gap:18px 28px;margin-top:clamp(40px,5vw,72px);padding-top:clamp(24px,3vw,36px);border-top:1px solid var(--line)}
+.connect-links{display:flex;flex-wrap:wrap;gap:10px}
+.soc{display:inline-flex;align-items:center;gap:10px;height:46px;padding:0 20px 0 16px;border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 22%,transparent);font-weight:600;font-size:15px;
+  transition:border-color .3s,background-color .3s,color .3s}
+.soc svg{width:18px;height:18px;fill:currentColor}
+.soc:hover{border-color:var(--magenta);color:var(--magenta-soft);background-color:color-mix(in srgb,var(--magenta) 10%,transparent)}
+@media (max-width:1100px){.platforms{grid-template-columns:repeat(3,minmax(0,1fr))}.plat-yt{grid-column:span 3;min-height:150px}}
+@media (max-width:640px){.platforms{grid-template-columns:repeat(2,minmax(0,1fr))}.plat-yt{grid-column:span 2}.plat{min-height:150px;gap:18px}.plat:last-child{grid-column:span 2;min-height:0}.soc{height:42px;font-size:14px}}
+
+/* host extras */
+.host-card em{font-style:italic}
+.host-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px;margin-top:4px}
+.host-actions .yt-link{margin-top:0}
+.yt-link svg[aria-hidden]{flex:none}
+
+/* free sticker */
+.sticker{position:relative;padding-block:clamp(70px,9vw,140px) 0}
+.sticker-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:clamp(32px,5vw,80px)}
+.sticker-media{position:relative;display:block;aspect-ratio:4/5;max-height:640px;width:100%;padding:0;border:0;border-radius:24px;overflow:hidden;cursor:pointer;background:var(--ink-2);
+  box-shadow:0 0 0 1px var(--line),0 40px 90px -40px color-mix(in srgb,var(--magenta) 55%,transparent);transform:rotate(-1.5deg);transition:transform .8s var(--ease)}
+.sticker-media:hover{transform:rotate(0deg) scale(1.01)}
+.sticker-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.35)}
+.sticker-media .play-btn{top:50%}
+.sticker-copy{display:grid;gap:22px;justify-items:start}
+.sticker-copy p{margin:0;max-width:38ch;font-size:clamp(1.05rem,1.3vw,1.2rem);color:color-mix(in srgb,var(--text) 84%,transparent)}
+@media (max-width:820px){.sticker-grid{grid-template-columns:1fr}.sticker-media{aspect-ratio:1;max-width:520px}}
+
+/* player: vertical clips */
+.player-frame.is-vertical{width:min(440px,100%,calc(78svh * 9 / 16));aspect-ratio:9/16}
+
 /* footer */
 .foot{position:relative;background:var(--ink);border-top:1px solid var(--line);padding-top:clamp(20px,2.5vw,36px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 28px);overflow:hidden}
 .foot{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 100px)}
@@ -402,7 +459,7 @@ main{position:relative;z-index:1}
 .foot-yt{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;border:1px solid color-mix(in srgb,var(--text) 22%,transparent);color:var(--text);transition:border-color .3s,color .3s,background-color .3s}
 .foot-yt:hover{border-color:var(--magenta);color:var(--magenta-soft);background-color:color-mix(in srgb,var(--magenta) 10%,transparent)}
 .foot-yt svg{width:20px;height:20px;fill:currentColor}
-@media (max-width:560px){.foot-row{grid-template-columns:auto 1fr auto;gap:12px}.foot-row .fine{font-size:9px;letter-spacing:.08em}.foot-row .logo{width:60px}.foot-icons{gap:8px}.foot-yt{width:40px;height:40px}.foot-yt svg{width:18px;height:18px}}
+@media (max-width:760px){.foot-row{grid-template-columns:auto 1fr;grid-template-areas:"logo icons" "fine fine";gap:20px 12px}.foot-row .logo{grid-area:logo;width:60px}.foot-icons{grid-area:icons;gap:8px}.foot-row .fine{grid-area:fine;font-size:10px;letter-spacing:.1em}.foot-yt{width:40px;height:40px}.foot-yt svg{width:18px;height:18px}}
 .fine{margin:0;font:500 11px/1.6 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
 .made-by{margin:22px auto 0;text-align:center;font:500 10px/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
 .made-by a{display:inline-flex;gap:.5em;padding:6px 2px;transition:color .3s}
@@ -436,20 +493,59 @@ main{position:relative;z-index:1}
 @media (max-width:420px){.ep-page .live-pill{display:none}}
 
 .ep-hero{min-height:clamp(640px,100svh,1040px)}
-.ep-hero .hero-content > *{max-width:820px}
+.ep-hero .hero-content > *{max-width:860px}
 .ep-hero .hero-shade{background:linear-gradient(180deg,color-mix(in srgb,var(--ink) 55%,transparent) 0%,transparent 22%,transparent 42%,color-mix(in srgb,var(--ink) 78%,transparent) 78%,var(--ink) 100%),
   linear-gradient(90deg,color-mix(in srgb,var(--ink) 72%,transparent) 0%,color-mix(in srgb,var(--ink) 26%,transparent) 48%,transparent 70%)}
+.hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 35%;animation:slowZoom 30s ease-in-out infinite alternate}
+@keyframes slowZoom{to{transform:scale(1.08)}}
 .ep-title{margin:0;font:900 clamp(4.2rem,12vw,11rem)/.8 var(--f-display);text-transform:uppercase;letter-spacing:-.005em;text-wrap:balance}
-.ep-title span{display:block}
 .ep-hero .label{color:var(--text)}
+.meta .tag.soon{background:none;border:1px solid color-mix(in srgb,var(--text) 40%,transparent);color:var(--text)}
 
 /* about */
 .ep-about{background:none}
-.about-body{grid-column:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px clamp(24px,4vw,56px);margin-top:clamp(34px,4vw,60px);max-width:980px}
+.about-body{grid-column:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px clamp(24px,4vw,56px);margin-top:clamp(34px,4vw,60px);max-width:1000px}
 .about-body p{margin:0;font-size:clamp(1.02rem,1.2vw,1.14rem);line-height:1.65;color:color-mix(in srgb,var(--text) 82%,transparent)}
+.about-body em{font-style:italic;color:var(--text)}
 .facts.f4{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media (max-width:1000px){.facts.f4{grid-template-columns:repeat(2,minmax(0,1fr))}.facts.f4 div{padding-bottom:22px}}
 @media (max-width:760px){.about-body{grid-column:1;grid-template-columns:1fr}.facts.f4{grid-template-columns:1fr}.facts.f4 div{padding:18px 0}}
+
+/* watch: the episode plays right on the page, listen links beside it */
+.ep-watch{position:relative;padding-block:clamp(40px,6vw,90px) clamp(90px,11vw,160px)}
+.ep-watch-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:20px 40px;margin-bottom:clamp(26px,3vw,44px)}
+.ep-watch-head > div{display:grid;gap:18px}
+.ep-watch-head p.note{margin:0;max-width:36ch;color:color-mix(in srgb,var(--text) 78%,transparent)}
+.watch-frame{position:relative;aspect-ratio:16/9;border-radius:clamp(16px,2vw,26px);overflow:hidden;background:var(--ink-2);
+  box-shadow:0 0 0 1px var(--line),0 50px 120px -50px color-mix(in srgb,var(--magenta) 60%,transparent)}
+.watch-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.watch-poster{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;background:none;cursor:pointer}
+.watch-poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.04);transition:transform 1.4s var(--ease),filter .6s}
+.watch-poster:hover img{transform:scale(1)}
+.watch-poster .play-btn{top:50%}
+.watch-poster .ep-shade{background:linear-gradient(0deg,color-mix(in srgb,var(--ink) 55%,transparent),transparent 45%)}
+.watch-cap{position:absolute;left:clamp(16px,2.4vw,32px);bottom:clamp(14px,2vw,26px);z-index:2;font:500 12px/1 var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:var(--text);pointer-events:none}
+.listen-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:clamp(20px,2.4vw,30px)}
+.listen-row .label{margin-right:10px}
+
+/* segments */
+.segs{position:relative;padding-bottom:clamp(90px,11vw,170px)}
+.segs-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:16px;margin-bottom:clamp(26px,3vw,44px)}
+.segs-head > div{display:grid;gap:18px}
+.seg-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(12px,1.4vw,20px)}
+.seg{display:grid;gap:14px;padding:0;border:0;background:none;color:var(--text);text-align:left;cursor:pointer;font:inherit}
+.seg-thumb{position:relative;display:block;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:var(--ink-2);box-shadow:0 0 0 1px var(--line);transition:box-shadow .5s var(--ease),transform .7s var(--ease)}
+.seg-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.04);transition:transform 1.2s var(--ease)}
+.seg-thumb .play-btn{top:50%;width:56px;box-shadow:0 0 0 8px color-mix(in srgb,var(--magenta) 14%,transparent),0 0 40px color-mix(in srgb,var(--magenta) 50%,transparent);opacity:0;scale:.8;transition:opacity .4s,scale .5s var(--ease)}
+.seg:hover .seg-thumb,.seg:focus-visible .seg-thumb{transform:translateY(-4px);box-shadow:0 0 0 1px color-mix(in srgb,var(--magenta) 70%,transparent),0 26px 60px -30px color-mix(in srgb,var(--magenta) 70%,transparent)}
+.seg:hover .seg-thumb img{transform:scale(1)}
+.seg:hover .play-btn,.seg:focus-visible .play-btn{opacity:1;scale:1}
+.seg-meta{display:grid;gap:8px}
+.seg-num{font:500 11px/1 var(--f-mono);letter-spacing:.2em;color:var(--magenta-soft)}
+.seg-title{font:800 clamp(1.4rem,1.8vw,1.8rem)/1 var(--f-display);text-transform:uppercase}
+@media (hover:none){.seg-thumb .play-btn{opacity:1;scale:1}}
+@media (max-width:1000px){.seg-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.seg-grid{grid-template-columns:1fr}}
 
 /* stills */
 .stills{position:relative;overflow:hidden;padding-bottom:clamp(90px,11vw,170px)}
@@ -491,7 +587,16 @@ main{position:relative;z-index:1}
   <symbol id="play" viewBox="0 0 24 24"><path d="M6 3.5v17a1 1 0 0 0 1.5.86l14-8.5a1 1 0 0 0 0-1.72l-14-8.5A1 1 0 0 0 6 3.5Z"/></symbol>
   <symbol id="mail" viewBox="0 0 24 24"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm1 2.3V17h16V7.3l-7.4 5.5a1 1 0 0 1-1.2 0L4 7.3ZM5.8 7l6.2 4.6L18.2 7H5.8Z"/></symbol>
   <symbol id="yt" viewBox="0 0 24 24"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4L15.8 12l-6.2 3.6Z"/></symbol>
+  <symbol id="spotify" viewBox="0 0 24 24"><path d="M12 1a11 11 0 1 0 0 22 11 11 0 0 0 0-22Zm5.05 15.87a.69.69 0 0 1-.94.23c-2.58-1.58-5.83-1.93-9.66-1.06a.69.69 0 1 1-.3-1.34c4.19-.96 7.79-.55 10.68 1.23.32.2.42.62.22.94Zm1.35-3a.86.86 0 0 1-1.18.28c-2.95-1.81-7.45-2.34-10.94-1.28a.86.86 0 1 1-.5-1.65c3.99-1.21 8.95-.62 12.34 1.46.4.25.53.78.28 1.19Zm.12-3.12C14.98 8.64 9.1 8.45 5.72 9.48a1.03 1.03 0 1 1-.6-1.98c3.88-1.18 10.36-.95 14.43 1.47a1.03 1.03 0 0 1-1.03 1.78Z"/></symbol>
+  <symbol id="podcast" viewBox="0 0 24 24"><path d="M12 2a9 9 0 0 0-3.6 17.25.75.75 0 0 0 .6-1.37A7.5 7.5 0 1 1 15 17.88a.75.75 0 0 0 .6 1.37A9 9 0 0 0 12 2Zm0 3.5a5.5 5.5 0 0 0-2.75 10.27.75.75 0 1 0 .75-1.3 4 4 0 1 1 4 0 .75.75 0 1 0 .75 1.3A5.5 5.5 0 0 0 12 5.5Zm0 3.25a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm0 5a1.6 1.6 0 0 0-1.6 1.8l.55 4.6a1.06 1.06 0 0 0 2.1 0l.55-4.6a1.6 1.6 0 0 0-1.6-1.8Z"/></symbol>
+  <symbol id="headphones" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-9 9v6a3 3 0 0 0 3 3h1a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1H5v-1a7 7 0 0 1 14 0v1h-2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h1a3 3 0 0 0 3-3v-6a9 9 0 0 0-9-9Z"/></symbol>
+  <symbol id="rss" viewBox="0 0 24 24"><path d="M4 4.5v3a12.5 12.5 0 0 1 12.5 12.5h3A15.5 15.5 0 0 0 4 4.5Zm0 6v3a6.5 6.5 0 0 1 6.5 6.5h3A9.5 9.5 0 0 0 4 10.5ZM6.25 15.5a2.25 2.25 0 1 0 0 4.5 2.25 2.25 0 0 0 0-4.5Z"/></symbol>
+  <symbol id="tiktok" viewBox="0 0 24 24"><path d="M16.6 2h-3.3v13.2a2.9 2.9 0 1 1-2.9-2.9c.3 0 .6 0 .9.1V9a6.3 6.3 0 1 0 5.3 6.2V8.6a7.9 7.9 0 0 0 4.4 1.4V6.7A4.6 4.6 0 0 1 16.6 2Z"/></symbol>
+  <symbol id="instagram" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7Zm5 3.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Zm5-3.25a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5Z"/></symbol>
+  <symbol id="facebook" viewBox="0 0 24 24"><path d="M13.5 22v-8.2h2.8l.4-3.2h-3.2V8.5c0-.9.3-1.6 1.6-1.6h1.7V4.1c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.4H7.3v3.2h2.8V22h3.4Z"/></symbol>
+  <symbol id="arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
+
 
 <div class="progress" aria-hidden="true"></div>
 <div class="cursor" aria-hidden="true"><div class="cursor-dot"><span class="cursor-label">Play</span></div></div>
@@ -512,12 +617,13 @@ main{position:relative;z-index:1}
   <nav class="menu-links" aria-label="Menu">
     <a class="m-link" href="index.html#show">The Show</a>
     <a class="m-link" href="index.html#episodes">Episodes</a>
+    <a class="m-link" href="index.html#watch">Watch</a>
     <a class="m-link" href="index.html#host">Meet Katie</a>
     <a class="m-link" href="#join">Join</a>
   </nav>
   <div class="menu-foot">
-    <button class="btn btn-primary" type="button" data-watch="ep1"><svg aria-hidden="true"><use href="#play"/></svg>Watch the first look</button>
-    <a class="yt-link" href="https://www.youtube.com/@RabbleandRouse" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#yt"/></svg>Subscribe on YouTube</a>
+    <button class="btn btn-primary" type="button" data-yt="tXj-h8ABgWE" data-label="Episode 1: Cheryl Katon"><svg aria-hidden="true"><use href="#play"/></svg>Watch Episode 1</button>
+    <a class="yt-link" href="https://www.youtube.com/@RabbleandRouse?sub_confirmation=1" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#yt"/></svg>Subscribe on YouTube</a>
   </div>
 </div>
 
@@ -531,12 +637,12 @@ main{position:relative;z-index:1}
     </div>
     <div class="wrap hero-content">
       <p class="label hero-anim"><svg aria-hidden="true"><use href="#spark"/></svg>Season one / Episode 01</p>
-      <h1 class="ep-title hero-anim" id="ep-title">Guest Name</h1>
-      <p class="meta hero-anim"><span class="tag">Out now</span><span>41 min</span><i></i><span>Web series</span><i></i><span>Hosted by Katie Martell</span></p>
-      <p class="synopsis hero-anim">Katie opens the series on the couch with her first guest, then takes the stage under the neon in front of a live crowd.</p>
+      <h1 class="ep-title hero-anim" id="ep-title">Cheryl Katon</h1>
+      <p class="meta hero-anim"><span class="tag">Live now</span><span>Video + podcast</span><i></i><span>Hosted by Katie Martell</span></p>
+      <p class="synopsis hero-anim">Katie sits down with the bravest woman we know to discuss growing up trans, living authentically, and the cost of visibility.</p>
       <div class="ctas hero-anim">
-        <button class="btn btn-primary magnetic" type="button" data-watch="ep1"><svg aria-hidden="true"><use href="#play"/></svg>Watch the first look</button>
-        <a class="btn btn-ghost magnetic" href="#credits">Credits</a>
+        <button class="btn btn-primary magnetic" type="button" data-yt="tXj-h8ABgWE" data-label="Episode 1: Cheryl Katon"><svg aria-hidden="true"><use href="#play"/></svg>Watch Episode 1</button>
+        <a class="btn btn-ghost magnetic" href="#watch">Listen to the podcast</a>
       </div>
     </div>
   </section>
@@ -544,24 +650,82 @@ main{position:relative;z-index:1}
   <section class="statement ep-about" id="about" aria-labelledby="about-label">
     <div class="wrap statement-grid">
       <p class="label" id="about-label"><svg aria-hidden="true"><use href="#spark"/></svg>About the episode</p>
-      <p class="statement-text" data-lit>First episode. First guest. <span class="hl">No script for the hard parts.</span></p>
+      <p class="statement-text" data-lit>Trans joy. Visibility. <span class="hl">Real lived experience.</span></p>
       <div class="about-body" data-reveal>
-        <p>Rabble &amp; Rouse opens on the couch. Katie sits down with her first guest and lets the conversation run: who they were before, the moment everything shifted, and what it cost to get to the other side.</p>
-        <p>Then the lights drop, the neon comes up, and Katie takes the stage in front of a live crowd. Forty-one minutes of real talk, big laughs, and the questions most hosts skip.</p>
+        <p>What is the impact of visibility? What is the cost? Host Katie Martell sits down with Cheryl Katon, LGBTQ+ advocate, nonprofit CEO, Eagle Scout, and quite simply, the bravest woman we know.</p>
+        <p>Cheryl shares her experience growing up trans in Boston in the 70s and 80s before having the language for it, secretly searching library shelves, finding her community, navigating loss, marriage and transition, and eventually becoming a CEO in Texas.</p>
+        <p>We explore the power and complicated cost of visibility, queer history, trans joy, meaningful allyship, and Cheryl’s very simple “trans agenda”: helping people feel seen, heard, and able to become who they are.</p>
+        <p>Plus: <em>Explain Like I’m Cis</em>, an alarming amount of knot-tying expertise, and the world’s tiniest trophy.</p>
       </div>
       <dl class="facts f4" data-reveal>
         <div><dt>Season</dt><dd>One</dd></div>
         <div><dt>Episode</dt><dd>01</dd></div>
-        <div><dt>Runtime</dt><dd>41 min</dd></div>
-        <div><dt>Format</dt><dd>Web series</dd></div>
+        <div><dt>Guest</dt><dd>Cheryl Katon</dd></div>
+        <div><dt>Status</dt><dd>Live now</dd></div>
       </dl>
+    </div>
+  </section>
+
+  <section class="ep-watch" id="watch" aria-labelledby="watch-title">
+    <div class="wrap">
+      <div class="ep-watch-head" data-reveal>
+        <div>
+          <p class="label"><svg aria-hidden="true"><use href="#spark"/></svg>Watch Episode 1</p>
+          <h2 class="sec-title" id="watch-title">The full <span class="grad-text">episode</span></h2>
+        </div>
+        <p class="note">Watch it right here, or take it with you on your favorite podcast app.</p>
+      </div>
+      <div class="watch-frame">
+        <button class="watch-poster" type="button" data-inline-yt="tXj-h8ABgWE" data-label="Episode 1: Cheryl Katon" data-cursor="play" aria-label="Play Episode 1: Cheryl Katon">
+          <img src="https://i.ytimg.com/vi/tXj-h8ABgWE/maxresdefault.jpg" data-yt-thumb="tXj-h8ABgWE" alt="" loading="lazy" decoding="async">
+          <span class="ep-shade"></span>
+          <span class="play-btn"><svg aria-hidden="true"><use href="#play"/></svg></span>
+          <span class="watch-cap">Episode 1: Cheryl Katon</span>
+        </button>
+      </div>
+      <div class="listen-row">
+        <p class="label">Listen on</p>
+        <a class="soc" href="https://youtu.be/tXj-h8ABgWE" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#yt"/></svg>YouTube</a>
+        <a class="soc" href="https://open.spotify.com/episode/3fIlIOgPVgsiZEin8yjsgl" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#spotify"/></svg>Spotify</a>
+        <a class="soc" href="https://podcasts.apple.com/us/podcast/rabble-rouse-with-katie-martell/id6816761938" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#podcast"/></svg>Apple Podcasts</a>
+        <a class="soc" href="https://music.amazon.com/podcasts/0fa41c51-29e2-4d1f-9343-2f73c4af3576/episodes/c202ee5d-8aec-4534-90f8-45175102670b/rabble-rouse-with-katie-martell-trans-joy-courage-the-cost-of-visibility-with-cheryl-katon-rabble-rouse-ep-1" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#headphones"/></svg>Amazon Music</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="segs" aria-labelledby="segs-title">
+    <div class="wrap">
+      <div class="segs-head">
+        <div>
+          <p class="label"><svg aria-hidden="true"><use href="#spark"/></svg>From Episode 01</p>
+          <h2 class="sec-title" id="segs-title">The <span class="grad-text">good bits</span></h2>
+        </div>
+      </div>
+      <div class="seg-grid">
+        <button class="seg" type="button" data-yt="AlXwMa9fHvY" data-label="Explain Like I’m Cis">
+          <span class="seg-thumb"><img src="https://i.ytimg.com/vi/AlXwMa9fHvY/hqdefault.jpg" alt="" loading="lazy" decoding="async"><span class="play-btn"><svg aria-hidden="true"><use href="#play"/></svg></span></span>
+          <span class="seg-meta"><span class="seg-num">01</span><span class="seg-title">Explain Like I’m Cis</span></span>
+        </button>
+        <button class="seg" type="button" data-yt="es-mvBCWM-g" data-label="Opening Monologue">
+          <span class="seg-thumb"><img src="https://i.ytimg.com/vi/es-mvBCWM-g/hqdefault.jpg" alt="" loading="lazy" decoding="async"><span class="play-btn"><svg aria-hidden="true"><use href="#play"/></svg></span></span>
+          <span class="seg-meta"><span class="seg-num">02</span><span class="seg-title">Opening Monologue</span></span>
+        </button>
+        <button class="seg" type="button" data-yt="Rlrg2zVncFQ" data-label="Final Toke">
+          <span class="seg-thumb"><img src="https://i.ytimg.com/vi/Rlrg2zVncFQ/hqdefault.jpg" alt="" loading="lazy" decoding="async"><span class="play-btn"><svg aria-hidden="true"><use href="#play"/></svg></span></span>
+          <span class="seg-meta"><span class="seg-num">03</span><span class="seg-title">Final Toke</span></span>
+        </button>
+        <button class="seg" type="button" data-yt="prVsDLt_mok" data-label="Knot on My Watch">
+          <span class="seg-thumb"><img src="https://i.ytimg.com/vi/prVsDLt_mok/hqdefault.jpg" alt="" loading="lazy" decoding="async"><span class="play-btn"><svg aria-hidden="true"><use href="#play"/></svg></span></span>
+          <span class="seg-meta"><span class="seg-num">04</span><span class="seg-title">Knot on My Watch</span></span>
+        </button>
+      </div>
     </div>
   </section>
 
   <section class="stills" aria-labelledby="stills-label">
     <div class="wrap stills-head">
       <p class="label" id="stills-label"><svg aria-hidden="true"><use href="#spark"/></svg>On set</p>
-      <p class="fine">Behind the scenes, season one</p>
+      <p class="fine">Filmed live at Triad Studios</p>
     </div>
     <div class="stills-track">
       <figure><img src="media/trail/02.jpg" alt="Katie and her guest laughing on the couch" width="640" height="427" loading="lazy" decoding="async"></figure>
@@ -570,7 +734,7 @@ main{position:relative;z-index:1}
       <figure><img src="media/trail/13.jpg" alt="Katie and a guest flexing under the neon sign" width="640" height="427" loading="lazy" decoding="async"></figure>
       <figure><img src="media/trail/24.jpg" alt="Katie and her guest raising mugs at the desk" width="640" height="427" loading="lazy" decoding="async"></figure>
       <figure class="p"><img src="media/trail/21.jpg" alt="Katie on stage under a warm spotlight" width="427" height="640" loading="lazy" decoding="async"></figure>
-      <figure><img src="media/trail/23.jpg" alt="The live crowd watching from the tables" width="640" height="427" loading="lazy" decoding="async"></figure>
+      <figure><img src="media/trail/23.jpg" alt="The live studio audience" width="640" height="427" loading="lazy" decoding="async"></figure>
       <figure><img src="media/trail/03.jpg" alt="A camera framing the neon sign" width="640" height="427" loading="lazy" decoding="async"></figure>
       <figure><img src="media/trail/20.jpg" alt="The Rabble and Rouse clapperboard" width="640" height="427" loading="lazy" decoding="async"></figure>
     </div>
@@ -584,25 +748,30 @@ main{position:relative;z-index:1}
       </div>
       <dl class="credit-list">
         <div class="credit lead"><dt>Hosted by</dt><dd><span>Katie Martell</span></dd></div>
-        <div class="credit lead"><dt>Featuring</dt><dd><span>Guest Name</span></dd></div>
-        <div class="credit-gap" aria-hidden="true"><svg><use href="#spark"/></svg></div>
-        <div class="credit"><dt>Executive Producer</dt><dd>Full Name</dd></div>
-        <div class="credit"><dt>Producer</dt><dd>Full Name</dd></div>
-        <div class="credit"><dt>Director</dt><dd>Full Name</dd></div>
-        <div class="credit"><dt>Production</dt><dd>QV Media</dd></div>
-        <div class="credit-gap" aria-hidden="true"><svg><use href="#spark"/></svg></div>
-        <div class="credit"><dt>Director of Photography</dt><dd>Full Name</dd></div>
-        <div class="credit"><dt>Camera</dt><dd><span>Full Name</span><span>Full Name</span></dd></div>
-        <div class="credit"><dt>Lighting</dt><dd>Full Name</dd></div>
-        <div class="credit"><dt>Sound</dt><dd>Full Name</dd></div>
-        <div class="credit"><dt>Editor</dt><dd>Full Name</dd></div>
-        <div class="credit-gap" aria-hidden="true"><svg><use href="#spark"/></svg></div>
-        <div class="credit"><dt>Set Design</dt><dd>Full Name</dd></div>
-        <div class="credit"><dt>Hair &amp; Makeup</dt><dd>Full Name</dd></div>
-        <div class="credit"><dt>Original Music</dt><dd>Full Name</dd></div>
-        <div class="credit"><dt>Recorded at</dt><dd>Venue, City</dd></div>
+        <div class="credit lead"><dt>Featuring</dt><dd><span>Cheryl Katon</span></dd></div>
+        <div class="credit-gap" aria-hidden="true"><svg ><use href="#spark"/></svg></div>
+        <div class="credit"><dt>Production</dt><dd><span>Jack Halliwell</span><span>Ilana Kapra</span><span>Jasper Lior</span></dd></div>
+        <div class="credit-gap" aria-hidden="true"><svg ><use href="#spark"/></svg></div>
+        <div class="credit"><dt>Hair and Makeup</dt><dd>Melissa Fraitag</dd></div>
+        <div class="credit"><dt>Wardrobe</dt><dd>Illya Cooper</dd></div>
+        <div class="credit"><dt>Set and Props Dec</dt><dd>Duncan Kennedy</dd></div>
+        <div class="credit"><dt>Special thanks to the</dt><dd>Huntington Theater Company</dd></div>
+        <div class="credit-gap" aria-hidden="true"><svg ><use href="#spark"/></svg></div>
+        <div class="credit"><dt>Talent Manager</dt><dd>Tati Riesenberg</dd></div>
+        <div class="credit"><dt>Production Assistant</dt><dd>Fiona Delay</dd></div>
+        <div class="credit"><dt>AD / Script Supervisor</dt><dd>Randyll Collum</dd></div>
+        <div class="credit"><dt>Gaff</dt><dd>Jen Kruh</dd></div>
+        <div class="credit"><dt>Photography</dt><dd><span>Adriana Arguijo</span><span>Kristin Hussey</span></dd></div>
+        <div class="credit"><dt>Legal and Spiritual Guidance</dt><dd>Jane Freedman Law</dd></div>
+        <div class="credit"><dt>Chief of Steph</dt><dd>Stephanie Tilton</dd></div>
+        <div class="credit-gap" aria-hidden="true"><svg ><use href="#spark"/></svg></div>
+        <div class="credit"><dt>Rabble &amp; Rouse is filmed at</dt><dd>Triad Studios</dd></div>
+        <div class="credit"><dt>Chief Katie Officer</dt><dd>Martine Martell</dd></div>
+        <div class="credit-gap" aria-hidden="true"><svg ><use href="#spark"/></svg></div>
+        <div class="credit"><dt>Brand Identity</dt><dd>SJI Associates</dd></div>
+        <div class="credit"><dt>Website Magic</dt><dd>RADCAT</dd></div>
       </dl>
-      <p class="fine">Recorded in front of a live audience. Thanks to everyone who showed up and got loud.</p>
+      <p class="fine">Filmed live in front of a studio audience.</p>
     </div>
   </section>
 
@@ -613,7 +782,7 @@ main{position:relative;z-index:1}
         <div class="join-copy">
           <p class="label"><svg aria-hidden="true"><use href="#spark"/></svg>Up next: Episode 02</p>
           <h2 class="join-title" id="join-title">Catch the <span class="grad-text">next one</span></h2>
-          <p>Episode 02 is coming soon. Get on the list and it lands in your inbox the day it drops. No spam. Unsubscribe anytime.</p>
+          <p>Episode 02 with Mistress Eustacia is coming soon. Get on the list and it lands in your inbox the day it drops. No spam. Unsubscribe anytime.</p>
         </div>
         <div class="join-side">
           <form class="join-form" id="joinForm" novalidate>
@@ -624,7 +793,7 @@ main{position:relative;z-index:1}
             </div>
             <p class="form-note" id="formNote" role="status" aria-live="polite">First to know when a new episode drops.</p>
           </form>
-          <a class="yt-link" href="https://www.youtube.com/@RabbleandRouse" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#yt"/></svg>Or subscribe on YouTube</a>
+          <a class="yt-link" href="https://www.youtube.com/@RabbleandRouse?sub_confirmation=1" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#yt"/></svg>Or subscribe on YouTube</a>
         </div>
       </div>
     </div>
@@ -638,16 +807,21 @@ main{position:relative;z-index:1}
     <p class="fine">© 2026 Rabble &amp; Rouse with Katie Martell</p>
     <div class="foot-icons">
       <a class="foot-yt" href="mailto:hello@rabbleandrouse.com" aria-label="Email hello@rabbleandrouse.com"><svg aria-hidden="true"><use href="#mail"/></svg></a>
-      <a class="foot-yt" href="https://www.youtube.com/@RabbleandRouse" target="_blank" rel="noopener" aria-label="Rabble and Rouse on YouTube"><svg aria-hidden="true"><use href="#yt"/></svg></a>
+      <a class="foot-yt" href="https://www.instagram.com/RabbleAndRouseShow" target="_blank" rel="noopener" aria-label="Rabble and Rouse on Instagram"><svg aria-hidden="true"><use href="#instagram"/></svg></a>
+      <a class="foot-yt" href="https://www.tiktok.com/@RabbleandRouse" target="_blank" rel="noopener" aria-label="Rabble and Rouse on TikTok"><svg aria-hidden="true"><use href="#tiktok"/></svg></a>
+      <a class="foot-yt" href="https://www.facebook.com/rabbleandrouse/" target="_blank" rel="noopener" aria-label="Rabble and Rouse on Facebook"><svg aria-hidden="true"><use href="#facebook"/></svg></a>
+      <a class="foot-yt" href="https://www.youtube.com/@RabbleandRouse?sub_confirmation=1" target="_blank" rel="noopener" aria-label="Rabble and Rouse on YouTube"><svg aria-hidden="true"><use href="#yt"/></svg></a>
     </div>
   </div>
   <p class="made-by wrap"><a href="https://radcat.design" target="_blank" rel="noopener">Website by <b>RADCAT</b></a></p>
 </footer>
 
-<div class="player" id="player" hidden role="dialog" aria-modal="true" aria-label="Episode 1 player">
+
+<div class="player" id="player" hidden role="dialog" aria-modal="true" aria-label="Video player">
   <button class="btn btn-ghost btn-sm player-close" type="button">Close</button>
   <div class="player-frame" id="playerMount"></div>
 </div>
+
 
 <script type="module">
 import * as THREE from './vendor/three.module.js';
@@ -666,6 +840,17 @@ dispatchEvent(new Event('three-ready'));
   const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const hasGsap = !!(window.gsap && window.ScrollTrigger);
   const SRC = { preview: 'media/preview.mp4', ep1: 'media/ep1.mp4' };
+  /* signups: paste the Mailchimp embedded form action (…list-manage.com/subscribe/post?u=…&id=…) to send straight to the list */
+  const MC_ACTION = ''.indexOf('http') === 0 ? '' : '';
+  const JOIN_URL = 'http://join.rabbleandrouse.com/';
+  const ytEmbed = id => `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1&modestbranding=1`;
+  const ytFrame = (id, label) => {
+    const f = document.createElement('iframe');
+    f.src = ytEmbed(id); f.title = label || 'Rabble and Rouse video';
+    f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen; web-share'; f.allowFullscreen = true;
+    f.referrerPolicy = 'strict-origin-when-cross-origin';
+    return f;
+  };
   const heroVideo = $('#heroVideo');
   const playSafe = v => { const p = v && v.play(); if (p && p.catch) p.catch(() => {}); };
   const inView = el => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; };
@@ -804,15 +989,21 @@ dispatchEvent(new Event('three-ready'));
   function openPlayer(kind, from) {
     lastFocus = document.activeElement;
     playerMount.innerHTML = '';
-    const label = kind === 'ep1' ? 'Episode 1 first look' : 'Season one preview';
-    const v = document.createElement('video');
-    v.src = SRC[kind] || SRC.preview;
-    v.controls = true; v.playsInline = true;
-    if (kind === 'ep1') { v.muted = true; v.loop = true; }
-    v.setAttribute('aria-label', label);
-    player.setAttribute('aria-label', label);
-    playerMount.append(v);
-    playSafe(v); // started from a click, so sound is allowed
+    playerMount.classList.toggle('is-vertical', !!(kind && kind.vertical));
+    if (kind && kind.yt) {
+      player.setAttribute('aria-label', kind.label || 'Video player');
+      playerMount.append(ytFrame(kind.yt, kind.label));
+    } else {
+      const label = kind === 'ep1' ? 'Episode 1 first look' : 'Season one preview';
+      const v = document.createElement('video');
+      v.src = SRC[kind] || SRC.preview;
+      v.controls = true; v.playsInline = true;
+      if (kind === 'ep1') { v.muted = true; v.loop = true; }
+      v.setAttribute('aria-label', label);
+      player.setAttribute('aria-label', label);
+      playerMount.append(v);
+      playSafe(v); // started from a click, so sound is allowed
+    }
     if (screenVideo) screenVideo.pause();
     if (heroVideo) heroVideo.pause();
     player.hidden = false;
@@ -843,10 +1034,35 @@ dispatchEvent(new Event('three-ready'));
       gsap.fromTo(player, { clipPath: `circle(${R}px at ${x}px ${y}px)` }, { clipPath: `circle(0px at ${x}px ${y}px)`, duration: .7, ease: 'expo.inOut', onComplete: () => { gsap.set(player, { clearProps: 'clipPath' }); done(); } });
     } else done();
   }
-  $$('[data-watch]').forEach(a => a.addEventListener('click', e => {
+  $$('[data-watch],[data-yt]').forEach(a => a.addEventListener('click', e => {
     e.preventDefault();
     closeMenu(true);
-    openPlayer(a.dataset.watch, a);
+    openPlayer(a.dataset.yt ? { yt: a.dataset.yt, vertical: 'vertical' in a.dataset, label: a.dataset.label } : a.dataset.watch, a);
+  }));
+
+  /* inline YouTube: the poster swaps for the player in place */
+  $$('[data-inline-yt]').forEach(b => b.addEventListener('click', () => {
+    const box = b.parentElement;
+    if (heroVideo) heroVideo.pause();
+    b.replaceWith(ytFrame(b.dataset.inlineYt, b.dataset.label));
+    box.classList.add('is-playing');
+  }));
+
+  /* YouTube thumbnails: fall back to the smaller still when there's no HD one */
+  $$('img[data-yt-thumb]').forEach(img => {
+    const low = () => { img.onload = img.onerror = null; img.src = `https://i.ytimg.com/vi/${img.dataset.ytThumb}/hqdefault.jpg`; };
+    img.onerror = low;
+    img.onload = () => { if (img.naturalWidth <= 120) low(); };
+    if (img.complete && img.naturalWidth && img.naturalWidth <= 120) low();
+  });
+
+  /* copy the RSS feed */
+  $$('[data-copy]').forEach(b => b.addEventListener('click', async () => {
+    const note = $('[data-copy-note]', b) || b, was = note.textContent;
+    try { await navigator.clipboard.writeText(b.dataset.copy); note.textContent = 'Feed copied'; }
+    catch (_) { window.open(b.dataset.copy, '_blank', 'noopener'); }
+    b.classList.add('is-copied');
+    setTimeout(() => { note.textContent = was; b.classList.remove('is-copied'); }, 2200);
   }));
   $('.player-close').addEventListener('click', closePlayer);
   player.addEventListener('click', e => { if (e.target === player) closePlayer(); });
@@ -890,26 +1106,47 @@ dispatchEvent(new Event('three-ready'));
     else scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
   }));
 
-  /* ---------- signup form ---------- */
-  $$('.ep-notify').forEach(f => f.addEventListener('submit', e => {
-    e.preventDefault();
-    const inp = $('input', f), n = $('.ep-note', f);
-    n.classList.remove('ok', 'err');
-    if (!inp.value.trim() || !inp.checkValidity()) { n.textContent = 'That email looks off. Try again.'; n.classList.add('err'); inp.focus(); return; }
-    n.textContent = "You're on the list. We'll ping you when it drops."; n.classList.add('ok'); f.reset();
-  }));
-  const form = $('#joinForm'), note = $('#formNote'), email = $('#email');
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    note.classList.remove('ok', 'err');
-    if (!email.value.trim() || !email.checkValidity()) {
-      note.textContent = 'That email address looks off. Check it and try again.';
-      note.classList.add('err'); email.focus(); return;
-    }
-    note.textContent = 'Thanks. Signups connect when the site goes live.';
-    note.classList.add('ok');
-    form.reset();
-  });
+  /* ---------- signup forms: straight into the Mailchimp list ---------- */
+  function subscribe(email) {
+    return new Promise((resolve, reject) => {
+      const cb = 'rrmc' + Date.now() + Math.floor(Math.random() * 1e4);
+      const tag = document.createElement('script');
+      const done = () => { clearTimeout(timer); delete window[cb]; tag.remove(); };
+      const timer = setTimeout(() => { done(); reject(new Error('timeout')); }, 12000);
+      window[cb] = d => {
+        done();
+        const msg = (d && d.msg) || '';
+        if (d && d.result === 'success') resolve('new');
+        else if (/already subscribed/i.test(msg)) resolve('already');
+        else reject(new Error(msg.replace(/<[^>]+>/g, '').replace(/^\d+ - /, '') || 'error'));
+      };
+      tag.onerror = () => { done(); reject(new Error('network')); };
+      tag.src = MC_ACTION.replace('/post?', '/post-json?') + '&EMAIL=' + encodeURIComponent(email) + '&c=' + cb;
+      document.head.append(tag);
+    });
+  }
+  function wireSignup(form, input, note, words) {
+    if (!form) return;
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      note.classList.remove('ok', 'err');
+      if (!input.value.trim() || !input.checkValidity()) { note.textContent = words.bad; note.classList.add('err'); input.focus(); return; }
+      if (!MC_ACTION) {
+        // until the list endpoint is set, hand off to the hosted signup page
+        window.open(JOIN_URL, '_blank', 'noopener');
+        note.textContent = 'Almost there. Finish signing up in the new tab.'; note.classList.add('ok');
+        return;
+      }
+      const btn = $('button[type="submit"]', form);
+      btn.disabled = true; note.textContent = 'Adding you…';
+      subscribe(input.value.trim())
+        .then(kind => { note.textContent = kind === 'already' ? "You're already on the list. Good taste." : words.ok; note.classList.add('ok'); form.reset(); })
+        .catch(err => { note.textContent = err.message && !/timeout|network|error/.test(err.message) ? err.message : 'Something went sideways. Try again in a sec.'; note.classList.add('err'); })
+        .finally(() => { btn.disabled = false; });
+    });
+  }
+  $$('.ep-notify').forEach(f => wireSignup(f, $('input', f), $('.ep-note', f), { bad: 'That email looks off. Try again.', ok: "You're on the list. We'll ping you when it drops." }));
+  wireSignup($('#joinForm'), $('#email'), $('#formNote'), { bad: 'That email address looks off. Check it and try again.', ok: "You're in. Welcome to the rabble." });
 
   /* ---------- footer sign fits its width ---------- */
   const word = $('#marqueeWord');
@@ -1221,7 +1458,7 @@ dispatchEvent(new Event('three-ready'));
       entries.forEach(en => { if (en.isIntersecting) current = en.target.id; else if (current === en.target.id) current = null; });
       setActive();
     }, { rootMargin: '-50% 0px -50% 0px' });
-    ['top', 'show', 'episodes', 'host', 'join'].forEach(id => { const el = document.getElementById(id); if (el) io.observe(el); });
+    ['top', 'show', 'episodes', 'watch', 'host', 'join'].forEach(id => { const el = document.getElementById(id); if (el) io.observe(el); });
     addEventListener('resize', setActive);
     const reveal = () => dock.classList.toggle('is-in', window.scrollY > innerHeight * .55);
     addEventListener('scroll', reveal, { passive: true });
@@ -1418,12 +1655,18 @@ dispatchEvent(new Event('three-ready'));
       scrollTrigger: { trigger: '.stills', start: 'top bottom', end: 'bottom top', scrub: .6, invalidateOnRefresh: true }
     });
   }
+  const segs = gsap.utils.toArray('.seg');
+  if (segs.length) {
+    gsap.set(segs, { y: 50, opacity: 0 });
+    ScrollTrigger.batch(segs, { start: 'top 90%', once: true, onEnter: b => gsap.to(b, { y: 0, opacity: 1, duration: 1.1, stagger: .08, ease: 'expo.out', overwrite: true }) });
+  }
   const rows = gsap.utils.toArray('.credits-head > *, .credit, .credit-gap, .credits .fine');
   gsap.set(rows, { y: 40, opacity: 0 });
   ScrollTrigger.batch(rows, {
     start: 'top 92%', once: true,
     onEnter: b => gsap.to(b, { y: 0, opacity: 1, duration: 1.1, stagger: .07, ease: 'expo.out', overwrite: true })
   });
+  gsap.from('.watch-frame', { y: 60, opacity: .2, duration: 1.4, ease: 'expo.out', scrollTrigger: { trigger: '.watch-frame', start: 'top 88%', once: true } });
   addEventListener('load', () => ScrollTrigger.refresh());
 })();
 </script>
