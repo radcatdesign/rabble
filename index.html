@@ -699,7 +699,7 @@ main{position:relative;z-index:1}
         <h2 id="host-title">Katie Martell</h2>
         <p>Katie Martell is a professional rabble-rouser and unapologetic truth-teller. With <em>Rabble &amp; Rouse</em>, she shines a spotlight on extraordinary lived experiences.</p>
         <div class="host-actions">
-          <button class="btn btn-primary btn-sm" type="button" data-yt="as_XrqcCPKI" data-vertical data-label="Who TF is Katie Martell?"><svg aria-hidden="true"><use href="#play"/></svg>Who TF is Katie Martell?</button>
+          <button class="btn btn-primary btn-sm" type="button" data-src="media/who-tf-katie.mp4" data-vertical data-label="Who TF is Katie Martell?"><svg aria-hidden="true"><use href="#play"/></svg>Who TF is Katie Martell?</button>
           <a class="yt-link" href="https://www.katie-martell.com" target="_blank" rel="noopener">katie-martell.com<svg aria-hidden="true"><use href="#arrow"/></svg></a>
         </div>
       </div>
@@ -1181,9 +1181,9 @@ initCloth();
       player.setAttribute('aria-label', kind.label || 'Video player');
       playerMount.append(ytFrame(kind.yt, kind.label));
     } else {
-      const label = kind === 'ep1' ? 'Episode 1 first look' : 'Season one preview';
+      const label = kind && kind.src ? (kind.label || 'Video') : kind === 'ep1' ? 'Episode 1 first look' : 'Season one preview';
       const v = document.createElement('video');
-      v.src = SRC[kind] || SRC.preview;
+      v.src = kind && kind.src ? kind.src : SRC[kind] || SRC.preview;
       v.controls = true; v.playsInline = true;
       if (kind === 'ep1') { v.muted = true; v.loop = true; }
       v.setAttribute('aria-label', label);
@@ -1221,10 +1221,11 @@ initCloth();
       gsap.fromTo(player, { clipPath: `circle(${R}px at ${x}px ${y}px)` }, { clipPath: `circle(0px at ${x}px ${y}px)`, duration: .7, ease: 'expo.inOut', onComplete: () => { gsap.set(player, { clearProps: 'clipPath' }); done(); } });
     } else done();
   }
-  $$('[data-watch],[data-yt]').forEach(a => a.addEventListener('click', e => {
+  $$('[data-watch],[data-yt],[data-src]').forEach(a => a.addEventListener('click', e => {
     e.preventDefault();
     closeMenu(true);
-    openPlayer(a.dataset.yt ? { yt: a.dataset.yt, vertical: 'vertical' in a.dataset, label: a.dataset.label } : a.dataset.watch, a);
+    const d = a.dataset, v = 'vertical' in d;
+    openPlayer(d.yt ? { yt: d.yt, vertical: v, label: d.label } : d.src ? { src: d.src, vertical: v, label: d.label } : d.watch, a);
   }));
 
   /* inline YouTube: the poster swaps for the player in place */

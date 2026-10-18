@@ -965,9 +965,9 @@ dispatchEvent(new Event('three-ready'));
       player.setAttribute('aria-label', kind.label || 'Video player');
       playerMount.append(ytFrame(kind.yt, kind.label));
     } else {
-      const label = kind === 'ep1' ? 'Episode 1 first look' : 'Season one preview';
+      const label = kind && kind.src ? (kind.label || 'Video') : kind === 'ep1' ? 'Episode 1 first look' : 'Season one preview';
       const v = document.createElement('video');
-      v.src = SRC[kind] || SRC.preview;
+      v.src = kind && kind.src ? kind.src : SRC[kind] || SRC.preview;
       v.controls = true; v.playsInline = true;
       if (kind === 'ep1') { v.muted = true; v.loop = true; }
       v.setAttribute('aria-label', label);
@@ -1005,10 +1005,11 @@ dispatchEvent(new Event('three-ready'));
       gsap.fromTo(player, { clipPath: `circle(${R}px at ${x}px ${y}px)` }, { clipPath: `circle(0px at ${x}px ${y}px)`, duration: .7, ease: 'expo.inOut', onComplete: () => { gsap.set(player, { clearProps: 'clipPath' }); done(); } });
     } else done();
   }
-  $$('[data-watch],[data-yt]').forEach(a => a.addEventListener('click', e => {
+  $$('[data-watch],[data-yt],[data-src]').forEach(a => a.addEventListener('click', e => {
     e.preventDefault();
     closeMenu(true);
-    openPlayer(a.dataset.yt ? { yt: a.dataset.yt, vertical: 'vertical' in a.dataset, label: a.dataset.label } : a.dataset.watch, a);
+    const d = a.dataset, v = 'vertical' in d;
+    openPlayer(d.yt ? { yt: d.yt, vertical: v, label: d.label } : d.src ? { src: d.src, vertical: v, label: d.label } : d.watch, a);
   }));
 
   /* inline YouTube: the poster swaps for the player in place */
