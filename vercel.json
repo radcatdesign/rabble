@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": { "api/*.js": { "maxDuration": 15 } },
+  "headers": [
+    { "source": "/server/(.*)", "headers": [{ "key": "x-robots-tag", "value": "noindex" }] }
+  ]
+}

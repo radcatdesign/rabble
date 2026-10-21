@@ -6,4 +6,4 @@ Static pages: `index.html` (home), `episode-1.html` and `episode-2.html` (episod
 
 Libraries load from jsDelivr: GSAP + ScrollTrigger, Lenis, and Three.js (curtain loader and footer sign).
 
-Merch: `store.html` plus the store routes in `functions/api/`. See `STORE-SETUP.md` to connect Printful and Stripe.
+Merch: `store.html` plus the store routes in `api/` (Vercel) and `functions/api/` (Cloudflare). See `STORE-SETUP.md` to connect Printful and Stripe.

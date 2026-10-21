@@ -1,0 +1,6 @@
+{
+  "name": "rabble-and-rouse",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" }
+}
