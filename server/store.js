@@ -27,14 +27,34 @@ export function cors(request, env) {
   return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'GET,POST,OPTIONS', 'access-control-allow-headers': 'content-type', vary: 'origin' };
 }
 
-async function printful(env, path, init = {}) {
+let apiStoreId = null; // found once per instance when the token can see several stores
+
+async function printful(env, path, init = {}, retried = false) {
   if (!env.PRINTFUL_TOKEN) throw new HttpError(503, 'Store is not connected yet');
   const headers = { authorization: `Bearer ${env.PRINTFUL_TOKEN}`, 'content-type': 'application/json' };
-  if (env.PRINTFUL_STORE_ID) headers['x-pf-store-id'] = env.PRINTFUL_STORE_ID;
+  const storeId = env.PRINTFUL_STORE_ID || apiStoreId;
+  if (storeId) headers['x-pf-store-id'] = String(storeId);
   const res = await fetch(PF + path, { ...init, headers: { ...headers, ...(init.headers || {}) } });
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new HttpError(res.status === 404 ? 404 : 502, (body.error && body.error.message) || body.result || `Printful ${res.status}`);
+  if (!res.ok) {
+    const msg = (body.error && body.error.message) || body.result || `Printful ${res.status}`;
+    // an account-wide token defaults to another store: find the Manual order / API one and try again
+    if (!retried && !env.PRINTFUL_STORE_ID && /Manual Order \/ API/i.test(String(msg))) {
+      const id = await findApiStore(env);
+      if (id) { apiStoreId = id; return printful(env, path, init, true); }
+      throw new HttpError(502, 'No Manual order / API store found for this Printful token');
+    }
+    throw new HttpError(res.status === 404 ? 404 : 502, msg);
+  }
   return body.result;
+}
+
+async function findApiStore(env) {
+  const res = await fetch(PF + '/stores', { headers: { authorization: `Bearer ${env.PRINTFUL_TOKEN}` } });
+  const body = await res.json().catch(() => ({}));
+  const stores = Array.isArray(body.result) ? body.result : [];
+  const api = stores.find(s => /native|api|manual/i.test(String(s.type)));
+  return api ? api.id : null;
 }
 
 export class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
