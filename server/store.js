@@ -54,7 +54,10 @@ async function findApiStore(env) {
   const body = await res.json().catch(() => ({}));
   const stores = Array.isArray(body.result) ? body.result : [];
   const api = stores.find(s => /native|api|manual/i.test(String(s.type)));
-  return api ? api.id : null;
+  if (api) return api.id;
+  // say what the token can see, so the fix is obvious from the error
+  const seen = stores.map(s => `${s.name} (${s.type})`).join(', ');
+  throw new HttpError(502, `This Printful token only reaches ${seen || (body.error && body.error.message) || 'no stores it can list'}. It needs a Manual order / API store.`);
 }
 
 export class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
