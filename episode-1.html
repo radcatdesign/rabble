@@ -138,6 +138,12 @@ a,button{-webkit-tap-highlight-color:transparent}
 @keyframes confettiDrift{to{background-position:-670px 1400px}}
 
 /* top-right menu */
+.bag-btn{position:relative}
+.bag-btn svg{fill:none!important;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
+.bag-count{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--grad);color:var(--white);font:600 11px/20px var(--f-body);text-align:center;transform:scale(0);transition:transform .45s var(--ease)}
+.bag-count.has{transform:scale(1)}
+.bag-btn.bump{animation:bump .5s var(--ease)}
+@keyframes bump{40%{transform:scale(1.15)}}
 .topbar{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 22px);right:var(--gutter);display:flex;align-items:center;gap:10px}
 .live-pill{display:inline-flex;align-items:center;gap:10px;height:46px;padding:0 18px;border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 26%,transparent);background:color-mix(in srgb,var(--ink) 35%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font:500 11px/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--text);white-space:nowrap;transition:border-color .3s,background-color .3s}
 .live-pill:hover{border-color:var(--text);background-color:color-mix(in srgb,var(--text) 8%,transparent)}
@@ -608,6 +614,7 @@ main{position:relative;z-index:1}
 <div class="topbar hero-anim">
   <a class="live-pill" href="index.html#episodes"><span class="live-dot"></span>Now streaming</a>
   <a class="icon-btn" href="#join" aria-label="Subscribe by email"><svg aria-hidden="true"><use href="#mail"/></svg></a>
+  <a class="icon-btn bag-btn" href="store.html" aria-label="Your bag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8L5 8Z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/></svg><span class="bag-count">0</span></a>
   <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menu"><span class="menu-icon" aria-hidden="true"><i></i><i></i></span></button>
 </div>
 
@@ -1072,6 +1079,14 @@ dispatchEvent(new Event('three-ready'));
   $('.player-close').addEventListener('click', closePlayer);
   player.addEventListener('click', e => { if (e.target === player) closePlayer(); });
   addEventListener('keydown', e => { if (e.key === 'Escape') { closePlayer(); closeMenu(); } });
+
+  /* ---------- bag count in the top bar (the Merch page keeps it live) ---------- */
+  (() => {
+    const c = $('.bag-count'); if (!c) return;
+    let n = 0;
+    try { n = (JSON.parse(localStorage.getItem('rr-bag-v1') || '[]') || []).reduce((s, l) => s + (l.qty || 0), 0); } catch (_) {}
+    c.textContent = n; c.classList.toggle('has', n > 0);
+  })();
 
   /* ---------- top-right menu ---------- */
   const menu = $('#menu'), menuBtn = $('.menu-btn:not(.menu-close)'), menuClose = $('.menu-close');
