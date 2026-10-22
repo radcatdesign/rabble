@@ -204,7 +204,9 @@ main{position:relative;z-index:1}
 .hero-media canvas,.poster{position:absolute;inset:0;width:100%;height:100%}
 .poster{object-fit:cover;opacity:0;transition:opacity 1.2s var(--ease)}
 .poster.is-loaded{opacity:1}
-.hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:var(--hero-poster) center/cover no-repeat}
+.hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:var(--hero-poster) center/cover no-repeat;opacity:.5}
+.hero-ball{position:absolute;inset:0;width:100%!important;height:100%!important;display:block;pointer-events:none}
+.hero-media{background:radial-gradient(42% 52% at 70% 34%,color-mix(in srgb,var(--violet) 22%,transparent),transparent 70%),radial-gradient(70% 60% at 85% 30%,color-mix(in srgb,var(--blue) 24%,transparent),transparent 70%),radial-gradient(60% 60% at 8% 100%,color-mix(in srgb,var(--magenta) 22%,transparent),transparent 70%),var(--ink)}
 .hero-shade{position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,color-mix(in srgb,var(--ink) 50%,transparent) 0%,transparent 20%,transparent 52%,color-mix(in srgb,var(--ink) 70%,transparent) 84%,var(--ink) 100%),
              linear-gradient(90deg,color-mix(in srgb,var(--ink) 70%,transparent) 0%,color-mix(in srgb,var(--ink) 22%,transparent) 42%,transparent 64%)}
@@ -568,6 +570,7 @@ main{position:relative;z-index:1}
 <main>
   <section class="hero" id="top" aria-label="Rabble &amp; Rouse">
     <div class="hero-media" aria-hidden="true">
+      <canvas class="hero-ball" id="heroBall" aria-hidden="true"></canvas>
       <video class="hero-video" id="heroVideo" src="media/preview.mp4" autoplay muted loop playsinline preload="auto"></video>
       <div class="hero-shade"></div>
     </div>
@@ -791,6 +794,106 @@ main{position:relative;z-index:1}
 import * as THREE from './vendor/three.module.js';
 window.THREE = THREE;
 dispatchEvent(new Event('three-ready'));
+
+/* ---------- hero: a mirror ball turning behind the season preview ---------- */
+(() => {
+  const canvas = document.getElementById('heroBall');
+  if (!canvas) return;
+  try {
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
+    renderer.setClearColor(0x000000, 0);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(32, 1, .1, 100);
+    camera.position.set(0, 0, 14);
+
+    // the ball: hundreds of small square mirrors on a sphere, each a hair off-angle so they catch light one by one
+    const R = 2.6, rings = 30, tiles = [];
+    for (let i = 1; i < rings; i++) {
+      const phi = Math.PI * i / rings, count = Math.max(6, Math.round(rings * 2 * Math.sin(phi)));
+      for (let j = 0; j < count; j++) tiles.push([phi, (j + (i % 2) * .5) / count * Math.PI * 2]);
+    }
+    const size = (Math.PI * R / rings) * .86;
+    const mirrors = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(size, size, .05),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: .85, roughness: .18, flatShading: true }),
+      tiles.length);
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), pos = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), look = new THREE.Object3D();
+    const base = [], col = new THREE.Color();
+    tiles.forEach(([phi, th], k) => {
+      pos.set(R * Math.sin(phi) * Math.cos(th), R * Math.cos(phi), R * Math.sin(phi) * Math.sin(th));
+      look.position.copy(pos); look.lookAt(pos.clone().multiplyScalar(2));
+      e.set((Math.random() - .5) * .14, (Math.random() - .5) * .14, 0); q.setFromEuler(e);
+      look.quaternion.multiply(q);
+      m.compose(pos, look.quaternion, one); mirrors.setMatrixAt(k, m);
+      const tint = Math.random();
+      base.push(tint < .78 ? new THREE.Color(.62, .62, .7) : tint < .89 ? new THREE.Color(.95, .55, .8) : new THREE.Color(.55, .7, 1));
+      mirrors.setColorAt(k, base[k]);
+    });
+    const ball = new THREE.Group();
+    ball.add(mirrors);
+    // a dark core so gaps between mirrors read as grout, not see-through
+    ball.add(new THREE.Mesh(new THREE.SphereGeometry(R * .97, 32, 24), new THREE.MeshBasicMaterial({ color: 0x0b0912 })));
+    const rig = new THREE.Group();
+    rig.add(ball);
+    // the rod it hangs from
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, 8, 6), new THREE.MeshBasicMaterial({ color: 0x3a3450 }));
+    rod.position.y = R + 4; rig.add(rod);
+    scene.add(rig);
+
+    scene.add(new THREE.AmbientLight(0x8a7fb0, .35));
+    const lights = [[0xff2d95, 60], [0x2f86ff, 60], [0xffffff, 38], [0xb44cff, 40]].map(([c, i]) => { const l = new THREE.PointLight(c, i, 30, 1.6); scene.add(l); return l; });
+
+    let w = 0, h = 0;
+    const fit = () => {
+      const r = canvas.getBoundingClientRect();
+      if (!r.width || !r.height || (r.width === w && r.height === h)) return;
+      w = r.width; h = r.height;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+      // sit up and to the right of the title card; centered higher on phones
+      const narrow = w < 760;
+      const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z, halfW = halfH * camera.aspect;
+      rig.position.set(narrow ? halfW * .38 : halfW * .42, narrow ? halfH * .38 : halfH * .22, 0);
+      const s = narrow ? Math.min(1, (halfW * .55) / R) : Math.min(1.15, (halfH * .62) / R);
+      rig.scale.setScalar(s);
+    };
+    fit(); addEventListener('resize', fit);
+
+    let visible = true, raf = 0, last = performance.now(), t = 0;
+    const sparkle = new Set();
+    const frame = now => {
+      const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
+      ball.rotation.y += dt * .22;
+      rig.rotation.z = Math.sin(t * .5) * .02;
+      lights.forEach((l, i) => {
+        const a = t * (.35 + i * .07) + i * 1.7;
+        l.position.set(Math.cos(a) * 7, Math.sin(a * .8 + i) * 4 + 1, 6 + Math.sin(a) * 2);
+        l.position.add(rig.position);
+      });
+      // a few mirrors flash white at a time
+      if (Math.random() < .5) sparkle.add({ k: Math.floor(Math.random() * tiles.length), life: 1 });
+      for (const sp of sparkle) {
+        sp.life -= dt * 2.6;
+        col.copy(base[sp.k]).lerp(new THREE.Color(1, 1, 1), Math.max(0, sp.life) * 1.4);
+        mirrors.setColorAt(sp.k, col);
+        if (sp.life <= 0) { mirrors.setColorAt(sp.k, base[sp.k]); sparkle.delete(sp); }
+      }
+      mirrors.instanceColor.needsUpdate = true;
+      renderer.render(scene, camera);
+      if (visible && !calm) raf = requestAnimationFrame(frame);
+    };
+    new IntersectionObserver(([en]) => {
+      visible = en.isIntersecting; fit();
+      cancelAnimationFrame(raf);
+      if (visible) { last = performance.now(); raf = requestAnimationFrame(frame); }
+    }).observe(canvas);
+    requestAnimationFrame(frame);
+  } catch (err) { canvas.remove(); }
+})();
+
 
 const COLS = 72, ROWS = 36, SEAM = .008;
 // closed, the panels cross the center a little (left one in front) so no light shows through; it eases out as they part
