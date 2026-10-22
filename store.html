@@ -1618,7 +1618,7 @@ dispatchEvent(new Event('three-ready'));
   renderBag();
 
   /* ---------- products ---------- */
-  function card(p) {
+  function card(p, i) {
     const vs = p.variants;
     const colors = [...new Set(vs.map(v => v.color).filter(Boolean))];
     const sizes = [...new Set(vs.map(v => v.size).filter(Boolean))];
@@ -1635,6 +1635,7 @@ dispatchEvent(new Event('three-ready'));
     const pick = { color: colors[0] || '', size: '' };
     const img = $('img', el), price = $('.prod-price', el), add = $('[data-add]', el);
     img.addEventListener('load', () => img.classList.add('ok'));
+    if (i < 6) img.loading = 'eager';  // first rows show right away
     const current = () => vs.find(v => (!colors.length || v.color === pick.color) && (sizes.length < 2 || v.size === pick.size)) || null;
     const sync = () => {
       el.querySelectorAll('[data-opt] .pill').forEach(b => {
@@ -1689,7 +1690,7 @@ dispatchEvent(new Event('three-ready'));
       if (!products.length) return empty();
       grid.removeAttribute('aria-busy');
       grid.innerHTML = '';
-      products.forEach(p => grid.append(card(p)));
+      products.forEach((p, i) => grid.append(card(p, i)));
       if (window.gsap && !matchMedia('(prefers-reduced-motion: reduce)').matches) gsap.from('.prod', { y: 50, opacity: 0, duration: 1.1, stagger: .08, ease: 'expo.out' });
       if (window.ScrollTrigger) ScrollTrigger.refresh();
     })
