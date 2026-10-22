@@ -780,7 +780,7 @@ dispatchEvent(new Event('three-ready'));
     const size = (Math.PI * R / rings) * .86;
     const mirrors = new THREE.InstancedMesh(
       new THREE.BoxGeometry(size, size, .05),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: .06, envMapIntensity: 1.8, flatShading: true }),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: .02, envMapIntensity: 2, flatShading: true }),
       tiles.length);
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), pos = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), look = new THREE.Object3D();
     const base = [], col = new THREE.Color();
@@ -810,7 +810,7 @@ dispatchEvent(new Event('three-ready'));
       const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
       const g = c.getContext('2d');
       const bg = g.createLinearGradient(0, 0, 0, 512);
-      bg.addColorStop(0, '#6a5a8c'); bg.addColorStop(.3, '#3a2f55'); bg.addColorStop(.55, '#1e1830'); bg.addColorStop(1, '#0e0b16');
+      bg.addColorStop(0, '#4a3f66'); bg.addColorStop(.3, '#241c38'); bg.addColorStop(.55, '#120e1e'); bg.addColorStop(1, '#07060c');
       g.fillStyle = bg; g.fillRect(0, 0, 1024, 512);
       const blob = (x, y, rx, ry, color, a) => {
         g.save(); g.translate(x, y); g.scale(rx / ry, 1);
@@ -823,6 +823,12 @@ dispatchEvent(new Event('three-ready'));
       for (let x = 0; x < 1024; x += 128) blob(x + 64, 40, 60, 14, '#ffffff', .85); // ceiling strip lights
       [[200, 150], [470, 110], [700, 160], [930, 120], [90, 120]].forEach(([x, y]) => { blob(x, y, 26, 26, '#ffffff', 1); blob(x, y, 8, 8, '#ffffff', 1); });
       blob(512, 470, 520, 60, '#3a1630', .7); // stage glow off the floor
+      // scattered lamps and reflections: what makes each tile catch something different
+      let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < 140; i++) {
+        const y = 20 + rnd() * 380, r = 3 + rnd() * 10, pick = rnd();
+        blob(rnd() * 1024, y, r * 1.6, r, pick < .55 ? '#ffffff' : pick < .75 ? '#ff8cc4' : pick < .9 ? '#86b8ff' : '#d9a6ff', .55 + rnd() * .45);
+      }
       const t = new THREE.CanvasTexture(c);
       t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace;
       const pm = new THREE.PMREMGenerator(renderer);
