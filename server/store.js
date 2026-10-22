@@ -61,6 +61,11 @@ async function findApiStore(env) {
 export class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
 
 const cents = v => Math.round(parseFloat(v) * 100);
+// the print file itself (the design), useful when Printful's mockup comes out blank
+const artImage = v => {
+  const f = (v.files || []).find(f => f.type === 'default' && (f.preview_url || f.thumbnail_url));
+  return (f && (f.preview_url || f.thumbnail_url)) || '';
+};
 const variantImage = v => {
   const preview = (v.files || []).find(f => f.type === 'preview' && (f.preview_url || f.thumbnail_url));
   return (preview && (preview.preview_url || preview.thumbnail_url)) || (v.product && v.product.image) || '';
@@ -81,6 +86,7 @@ export async function listProducts(env) {
         price: cents(v.retail_price),
         currency: (v.currency || 'USD').toLowerCase(),
         image: variantImage(v),
+        art: artImage(v),
         available: !v.availability_status || v.availability_status === 'active'
       }))
       .filter(v => v.price > 0);
