@@ -13,6 +13,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const clean = s => String(s || '').replace(/<[^>]+>/g, '').replace(/^\d+ - /, '').trim();
 
 export async function subscribe(env, email, source = 'website') {
+  env = { ...env, MAILCHIMP_API_KEY: (env.MAILCHIMP_API_KEY || env.MAILCHIMP_KEY || env.MAILCHIMP_API || env.MC_API_KEY || '').trim() };
   email = String(email || '').trim().toLowerCase();
   if (!EMAIL_RE.test(email) || email.length > 254) throw new HttpError(400, 'That email address looks off. Check it and try again.');
   const tag = String(source || 'website').replace(/[^\w -]/g, '').slice(0, 40) || 'website';
@@ -25,8 +26,8 @@ export async function subscribe(env, email, source = 'website') {
       body: JSON.stringify({ email_address: email, status: String(env.MAILCHIMP_DOUBLE_OPTIN) === 'true' ? 'pending' : 'subscribed', tags: ['website', tag] })
     });
     const body = await res.json().catch(() => ({}));
-    if (res.ok) return { status: 'new' };
-    if (body.title === 'Member Exists') return { status: 'already' };
+    if (res.ok) return { status: 'new', via: 'api' };
+    if (body.title === 'Member Exists') return { status: 'already', via: 'api' };
     if (res.status === 400) throw new HttpError(400, clean(body.detail) || 'Mailchimp turned that one down.');
     throw new HttpError(502, 'Mailchimp is not answering right now');
   }
@@ -38,9 +39,9 @@ export async function subscribe(env, email, source = 'website') {
   let data = null;
   try { data = JSON.parse(m ? m[1] : text); } catch (_) {}
   if (!data) { const e = new HttpError(502, 'Mailchimp is not answering right now'); e.detail = `${res.status} ${res.headers.get('content-type')} ${text.slice(0, 300)}`; throw e; }
-  if (data.result === 'success') return { status: 'new' };
+  if (data.result === 'success') return { status: 'new', via: 'form' };
   const msg = clean(data.msg);
-  if (/already subscribed|is already a list member/i.test(msg)) return { status: 'already' };
+  if (/already subscribed|is already a list member/i.test(msg)) return { status: 'already', via: 'form' };
   if (/too many/i.test(msg)) throw new HttpError(429, 'Too many tries from this address. Give it a few minutes.');
   throw new HttpError(400, msg || 'Mailchimp turned that one down.');
 }
