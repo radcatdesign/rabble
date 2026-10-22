@@ -21,10 +21,8 @@ export const json = (data, status = 200, headers = {}) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', ...headers } });
 
 export function cors(request, env) {
-  const origin = request.headers.get('origin') || '';
-  const allowed = [env.SITE_URL, env.ALLOWED_ORIGIN].filter(Boolean).map(s => s.replace(/\/$/, ''));
-  if (!origin || !allowed.includes(origin)) return {};
-  return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'GET,POST,OPTIONS', 'access-control-allow-headers': 'content-type', vary: 'origin' };
+  // public catalog and checkout: no cookies or accounts, and prices are always set on the server
+  return { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,POST,OPTIONS', 'access-control-allow-headers': 'content-type' };
 }
 
 let apiStoreId = null; // found once per instance when the token can see several stores
@@ -88,6 +86,19 @@ export async function listProducts(env) {
       .filter(v => v.price > 0);
     return { id: p.id, name: p.name, image: p.thumbnail_url || (variants[0] && variants[0].image) || '', variants };
   }).filter(p => p.variants.length);
+}
+
+/* Printful often holds the same product more than once (one listing per color or a re-sync); show one card each */
+export function mergeByName(products) {
+  const out = new Map();
+  for (const p of products) {
+    const key = p.name.trim().toLowerCase().replace(/\s+/g, ' ');
+    const have = out.get(key);
+    if (!have) { out.set(key, { ...p, variants: [...p.variants] }); continue; }
+    const seen = new Set(have.variants.map(v => `${v.color}|${v.size}`));
+    for (const v of p.variants) if (!seen.has(`${v.color}|${v.size}`)) { have.variants.push(v); seen.add(`${v.color}|${v.size}`); }
+  }
+  return [...out.values()];
 }
 
 /* ---------- checkout: prices come from Printful, never from the browser ---------- */

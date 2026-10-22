@@ -1545,7 +1545,9 @@ dispatchEvent(new Event('three-ready'));
 <script>
 /* merch: products from Printful through /api, bag kept in this browser, checkout on Stripe */
 (() => {
-  const API = ''.indexOf('http') === 0 ? ''.replace(/\/$/, '') + '/api' : 'api';
+  // on the live site the API is next door; any other copy of the page (GitHub, previews) asks the live site
+  const LIVE = ''.indexOf('http') === 0 ? ''.replace(/\/$/, '') : 'https://rabble-rouse.vercel.app';
+  const API = /vercel\.app$|rabbleandrouse\.com$/.test(location.hostname) ? 'api' : LIVE + '/api';
   const $ = (s, r = document) => r.querySelector(s);
   const grid = $('#grid'), lines = $('#lines'), drawer = $('#drawer'), veil = $('#veil');
   const bagBtn = $('.bag-btn'), countEl = $('.bag-count'), subEl = $('#subtotal'), errEl = $('#bagErr'), payBtn = $('#checkoutBtn');
@@ -1676,8 +1678,12 @@ dispatchEvent(new Event('three-ready'));
       <div class="ctas"><a class="btn btn-primary" href="#join">Get first dibs</a><a class="btn btn-ghost" href="index.html#stickers">Grab a free sticker</a></div>
     </div>`;
   }
-  fetch(`${API}/products`, { headers: { accept: 'application/json' } })
-    .then(r => r.json())
+  const load = () => fetch(`${API}/products`, { headers: { accept: 'application/json' } }).then(r => r.json()).then(d => {
+    if (!d || !d.products || !d.products.length) throw new Error(d && d.error || 'empty');
+    return d;
+  });
+  // one quiet retry before giving up, so a slow Printful moment doesn't blank the shop
+  load().catch(() => new Promise(r => setTimeout(r, 1500)).then(load))
     .then(d => {
       const products = (d && d.products) || [];
       if (!products.length) return empty();
