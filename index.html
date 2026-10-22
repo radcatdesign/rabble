@@ -1274,6 +1274,11 @@ initCloth();
   player.addEventListener('click', e => { if (e.target === player) closePlayer(); });
   addEventListener('keydown', e => { if (e.key === 'Escape') { closePlayer(); closeMenu(); } });
 
+  /* ---------- previews and copies can't run the store: Merch links open the live shop ---------- */
+  if (!/vercel\.app$|rabbleandrouse\.com$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)) {
+    $$('a[href="store.html"]').forEach(a => { a.href = 'https://rabble-rouse.vercel.app/store.html'; a.target = '_blank'; a.rel = 'noopener'; });
+  }
+
   /* ---------- bag count in the top bar (the Merch page keeps it live) ---------- */
   (() => {
     const c = $('.bag-count'); if (!c) return;

@@ -983,6 +983,11 @@ dispatchEvent(new Event('three-ready'));
   player.addEventListener('click', e => { if (e.target === player) closePlayer(); });
   addEventListener('keydown', e => { if (e.key === 'Escape') { closePlayer(); closeMenu(); } });
 
+  /* ---------- previews and copies can't run the store: Merch links open the live shop ---------- */
+  if (!/vercel\.app$|rabbleandrouse\.com$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)) {
+    $$('a[href="store.html"]').forEach(a => { a.href = 'https://rabble-rouse.vercel.app/store.html'; a.target = '_blank'; a.rel = 'noopener'; });
+  }
+
   /* ---------- bag count in the top bar (the Merch page keeps it live) ---------- */
   (() => {
     const c = $('.bag-count'); if (!c) return;
@@ -1713,6 +1718,8 @@ dispatchEvent(new Event('three-ready'));
   ];
   const category = name => CATS.find(([, re]) => re.test(name))[0];
   function shop(items) {
+    // shop() runs again when a fresh catalog replaces the cached one: start from clean controls
+    ['#chips', '#sort', '#shopNone [data-all]'].forEach(sel => { const el = $(sel); el.replaceWith(el.cloneNode(true)); });
     const bar = $('#shopBar'), chips = $('#chips'), sortEl = $('#sort'), none = $('#shopNone');
     const counts = {}; items.forEach(it => { counts[it.cat] = (counts[it.cat] || 0) + 1; });
     const cats = CATS.map(([c]) => c).filter(c => counts[c]);
@@ -1744,20 +1751,35 @@ dispatchEvent(new Event('three-ready'));
     if (!d || !d.products || !d.products.length) throw new Error(d && d.error || 'empty');
     return d;
   });
-  // one quiet retry before giving up, so a slow Printful moment doesn't blank the shop
-  load().catch(() => new Promise(r => setTimeout(r, 1500)).then(load))
-    .then(d => {
-      const products = (d && d.products) || [];
-      if (!products.length) return empty();
+  // the last catalog this browser saw shows instantly; the fresh one replaces it when it lands
+  const CACHE = 'rr-catalog-v1';
+  let cached = null;
+  try { const c = JSON.parse(localStorage.getItem(CACHE) || 'null'); if (c && Date.now() - c.at < 7 * 864e5 && c.products && c.products.length) cached = c; } catch (_) {}
+  let rendered = false;
+  const show = d => {
+    const products = (d && d.products) || [];
+    if (!products.length) return empty();
+    rendered = true;
+    {
       grid.removeAttribute('aria-busy');
       grid.innerHTML = '';
       const items = products.map((p, i) => ({ p, i, el: card(p, i), cat: category(p.name), price: Math.min(...p.variants.map(v => v.price)) }));
       items.forEach(it => grid.append(it.el));
       shop(items);
-      if (window.gsap && !matchMedia('(prefers-reduced-motion: reduce)').matches) gsap.from('.prod', { opacity: 0, duration: .8, stagger: .03, ease: 'power2.out', clearProps: 'opacity' });
       if (window.ScrollTrigger) ScrollTrigger.refresh();
-    })
-    .catch(empty);
+    }
+  };
+  if (cached) show(cached);
+  const fresh = (tries = 0) => load().then(d => {
+    try { localStorage.setItem(CACHE, JSON.stringify({ at: Date.now(), products: d.products })); } catch (_) {}
+    const same = cached && JSON.stringify(cached.products) === JSON.stringify(d.products);
+    if (!same) show(d);
+  }).catch(() => {
+    // a few patient retries before the empty state, and never replace a shop that's already showing
+    if (tries < 3) return new Promise(r => setTimeout(r, 1200 * (tries + 1))).then(() => fresh(tries + 1));
+    if (!rendered) empty();
+  });
+  fresh();
 })();
 </script>
 </body>
