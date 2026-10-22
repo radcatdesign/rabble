@@ -788,6 +788,8 @@ window.THREE = THREE;
 dispatchEvent(new Event('three-ready'));
 
 const COLS = 72, ROWS = 36, SEAM = .008;
+// closed, the panels cross the center a little (left one in front) so no light shows through; it eases out as they part
+const OVERLAP = .32, OVER_DEPTH = .85;
 class Cloth {
   constructor(side, height) {
     this.side = side; this.height = height; this.count = (COLS + 1) * (ROWS + 1);
@@ -802,11 +804,14 @@ class Cloth {
   }
   setRest(halfWidth, open, reset = false) {
     const width = halfWidth * (1 - .89 * open), r = this.rest;
+    const f = Math.max(0, 1 - open * 5), over = OVERLAP * f;
+    this.limit = SEAM - over;
+    const lift = this.side < 0 ? OVER_DEPTH * f : 0;
     for (let i = 0; i < this.count; i++) {
       const u = (i % (COLS + 1)) / COLS, v = Math.floor(i / (COLS + 1)) / ROWS, j = i * 3;
-      r[j] = this.side * (halfWidth - width + u * width) + this.side * SEAM;
+      r[j] = this.side * (halfWidth - width + u * width) + this.side * this.limit + this.side * u * over;
       r[j + 1] = this.height * (.5 - v);
-      r[j + 2] = Math.sin(u * Math.PI * 18 + .08 * Math.sin(v * 3)) * .36 + Math.sin(u * Math.PI * 36) * .025;
+      r[j + 2] = Math.sin(u * Math.PI * 18 + .08 * Math.sin(v * 3)) * .36 + Math.sin(u * Math.PI * 36) * .025 + lift * Math.max(0, 1 - u * 3);
     }
     for (const l of this.links) l.length = Math.hypot(r[l.b] - r[l.a], r[l.b + 1] - r[l.a + 1], r[l.b + 2] - r[l.a + 2]);
     if (!this.ready || reset) { this.positions.set(r); this.previous.set(r); this.wake = []; this.ready = true; }
@@ -818,8 +823,9 @@ class Cloth {
   pin() { for (let j = 0; j < (COLS + 1) * 3; j++) { this.positions[j] = this.rest[j]; this.previous[j] = this.rest[j]; } }
   resolveSeam() {
     const p = this.positions, old = this.previous;
-    for (let j = 0; j < p.length; j += 3) if (this.side * p[j] < SEAM) {
-      const nv = this.side * (p[j] - old[j]); p[j] = this.side * SEAM; old[j] = p[j] - this.side * Math.max(0, nv) * .5;
+    const lim = this.limit === undefined ? SEAM : this.limit;
+    for (let j = 0; j < p.length; j += 3) if (this.side * p[j] < lim) {
+      const nv = this.side * (p[j] - old[j]); p[j] = this.side * lim; old[j] = p[j] - this.side * Math.max(0, nv) * .5;
     }
   }
   step(dt, time, wind, sens) {
@@ -859,7 +865,7 @@ class Cloth {
         const f = (len - l.length) / len * l.k / (wa + wb);
         p[a] += x * f * wa; p[a + 1] += y * f * wa; p[a + 2] += z * f * wa; p[b] -= x * f * wb; p[b + 1] -= y * f * wb; p[b + 2] -= z * f * wb;
       }
-      for (const g of this.grabs.values()) { const j = g.index * 3; for (let axis = 0; axis < 3; axis++) p[j + axis] += ((axis === 0 ? this.side * Math.max(SEAM, this.side * g.target[axis]) : g.target[axis]) - p[j + axis]) * .78; }
+      for (const g of this.grabs.values()) { const j = g.index * 3; for (let axis = 0; axis < 3; axis++) p[j + axis] += ((axis === 0 ? this.side * Math.max(this.limit === undefined ? SEAM : this.limit, this.side * g.target[axis]) : g.target[axis]) - p[j + axis]) * .78; }
       this.pin(); this.resolveSeam();
     }
     const sm = this.smooth; sm.set(p);
