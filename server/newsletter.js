@@ -36,7 +36,7 @@ export async function subscribe(env, email, source = 'website') {
   const m = text.match(/^\s*rr\((.*)\)\s*;?\s*$/s);
   let data = null;
   try { data = JSON.parse(m ? m[1] : text); } catch (_) {}
-  if (!data) throw new HttpError(502, 'Mailchimp is not answering right now');
+  if (!data) { const e = new HttpError(502, 'Mailchimp is not answering right now'); e.detail = `${res.status} ${res.headers.get('content-type')} ${text.slice(0, 300)}`; throw e; }
   if (data.result === 'success') return { status: 'new' };
   const msg = clean(data.msg);
   if (/already subscribed|is already a list member/i.test(msg)) return { status: 'already' };
