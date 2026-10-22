@@ -6,7 +6,7 @@
 <script>/* one site: the GitHub Pages copy forwards to the live Vercel site */
 if (location.hostname === 'radcatdesign.github.io') location.replace('https://rabble-rouse.vercel.app' + location.pathname.replace(/^\/rabble/, '') + location.search + location.hash);</script>
 <script>/* page transition: arriving from another page, start behind closed curtains */
-try { if (sessionStorage.getItem('rr-curtain')) { sessionStorage.removeItem('rr-curtain'); document.documentElement.classList.add('rr-cur', 'rr-shut'); setTimeout(function () { if (!window.rrStage) document.documentElement.classList.remove('rr-cur', 'rr-shut'); }, 3000); } } catch (e) {}</script>
+try { if (sessionStorage.getItem('rr-curtain')) { sessionStorage.removeItem('rr-curtain'); var h = document.documentElement, still = sessionStorage.getItem('rr-curtain-still'); h.classList.add('rr-cur', 'rr-shut'); if (still) { h.classList.add('rr-snap'); h.style.setProperty('--rr-snap', 'url(' + still + ')'); sessionStorage.removeItem('rr-curtain-still'); } setTimeout(function () { if (!window.rrStage) document.documentElement.classList.remove('rr-cur', 'rr-shut'); }, 3000); } } catch (e) {}</script>
 <title>Episode 01: Cheryl Katon · Rabble &amp; Rouse</title>
 <meta name="description" content="Rabble &amp; Rouse with Katie Martell, Episode 01. Katie sits down with Cheryl Katon to discuss growing up trans, living authentically, and the cost of visibility.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -100,6 +100,11 @@ html::after{right:0;transform-origin:100% 50%;transform:translateX(102%) scaleX(
 html.rr-cur::before,html.rr-cur::after{display:block}
 html.rr-shut::before,html.rr-shut::after{transform:none;pointer-events:auto}
 html.rr-cut::before,html.rr-cut::after{transition:none}
+html.rr-snap::before{width:100%;background:#080711 var(--rr-snap) center/100% 100% no-repeat;box-shadow:none}
+html.rr-snap::after{display:none}
+.rr-cloth{position:fixed!important;inset:0;z-index:2147483601!important;pointer-events:none;opacity:0!important;transition:none!important}
+.rr-cloth.is-live{opacity:1!important}
+.rr-cloth.is-on{pointer-events:auto}
 
 /* loader: velvet stage curtains that part once the page is ready */
 .intro{position:fixed;inset:0;z-index:200;background:#080711;display:grid;place-items:center;overflow:hidden;animation:introGone 0s linear 12.5s forwards}
@@ -1525,46 +1530,79 @@ dispatchEvent(new Event('three-ready'));
     gsap.ticker.lagSmoothing(0);
   }
 
-  /* page transition: open the curtains we arrived behind, close them on the way out */
+  /* page transition: the same velvet cloth as the home loader closes on the way out and parts on the next page.
+     The closed frame is saved so the next page can sit on that exact picture until its own cloth is drawn. */
   const root = document.documentElement;
   const arrived = root.classList.contains('rr-shut');
-  let stageOpen;
+  let stageOpen, cur = null, curLoad = null;
   window.rrStage = new Promise(r => { stageOpen = r; });
-  const clearCurtains = () => root.classList.remove('rr-cur', 'rr-shut', 'rr-cut');
+  const clearCurtains = () => { root.classList.remove('rr-cur', 'rr-shut', 'rr-cut', 'rr-snap'); root.style.removeProperty('--rr-snap'); };
+  const cutCurtains = () => { root.classList.add('rr-cut'); clearCurtains(); };
+  const curtain = start => curLoad || (curLoad = import('./curtain.js')
+    .then(m => (cur = m.mount(document.body, { mode: 'transition', start })))
+    .catch(() => null));
+  const pageReady = () => {
+    const t0 = performance.now();
+    return Promise.race([
+      Promise.all([document.fonts && document.fonts.ready ? document.fonts.ready : 0, new Promise(r => document.readyState !== 'loading' ? r() : addEventListener('DOMContentLoaded', r, { once: true }))]),
+      new Promise(r => setTimeout(r, 2000))
+    ]).then(() => new Promise(r => setTimeout(r, Math.max(0, 500 - (performance.now() - t0)))));
+  };
   if (!arrived) stageOpen();
   else if (intro) {
-    // home has its own curtain loader: swap ours for it the moment it's on screen
-    const swap = () => { root.classList.add('rr-cut'); clearCurtains(); stageOpen(); };
+    // home has its own curtain loader: swap the saved frame for it the moment it's on screen
+    const swap = () => { cutCurtains(); stageOpen(); };
     if (window.rrCloth && window.rrCloth.live) swap();
     else { addEventListener('cloth-ready', swap, { once: true }); addEventListener('cloth-failed', swap, { once: true }); setTimeout(swap, 4000); }
   } else {
-    const t0 = performance.now();
-    const ready = Promise.race([
-      Promise.all([document.fonts && document.fonts.ready ? document.fonts.ready : 0, new Promise(r => document.readyState !== 'loading' ? r() : addEventListener('DOMContentLoaded', r, { once: true }))]),
-      new Promise(r => setTimeout(r, 1600))]);
-    ready.then(() => setTimeout(() => {
-      root.classList.remove('rr-shut'); stageOpen();
+    const loaded = curtain('closed').then(c => c ? Promise.race([c.ready, new Promise(r => setTimeout(r, 2500))]).then(() => c) : null);
+    Promise.all([loaded, pageReady()]).then(([c]) => {
+      if (c) { cutCurtains(); c.open(); stageOpen(); return; }
+      // no WebGL: the flat velvet fallback parts instead
+      root.classList.remove('rr-snap'); root.classList.remove('rr-shut'); stageOpen();
       setTimeout(clearCurtains, 900);
-    }, Math.max(0, 450 - (performance.now() - t0))));
+    });
   }
+  // get the cloth ready in the background so a click closes it right away
+  if (!arrived || intro) {
+    const warm = () => curtain('open');
+    if (document.readyState === 'complete') setTimeout(warm, 1200); else addEventListener('load', () => setTimeout(warm, 1200), { once: true });
+  }
+  let leaving = false;
   document.addEventListener('click', e => {
-    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || leaving) return;
     const a = e.target.closest && e.target.closest('a[href]');
     if (!a || (a.target && a.target !== '_self') || a.hasAttribute('download')) return;
     let url; try { url = new URL(a.href, location.href); } catch (_) { return; }
     if (url.origin !== location.origin || !/(\.html|\/)$/.test(url.pathname)) return;
     if (url.pathname === location.pathname && url.search === location.search) return; // same page: let anchors scroll
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    e.preventDefault();
-    try { sessionStorage.setItem('rr-curtain', '1'); } catch (_) {}
-    root.classList.remove('rr-cut', 'rr-shut'); root.classList.add('rr-cur');
-    getComputedStyle(root, '::before').transform; // start from open
-    root.classList.add('rr-shut');
+    e.preventDefault(); leaving = true;
     if (lenis) lenis.stop();
-    setTimeout(() => { location.href = url.href; }, 820);
+    const go = still => {
+      try { sessionStorage.setItem('rr-curtain', '1'); if (still) sessionStorage.setItem('rr-curtain-still', still); else sessionStorage.removeItem('rr-curtain-still'); } catch (_) {}
+      location.href = url.href;
+    };
+    const flat = () => {
+      root.classList.remove('rr-cut', 'rr-shut', 'rr-snap'); root.classList.add('rr-cur');
+      getComputedStyle(root, '::before').transform; // start from open
+      root.classList.add('rr-shut');
+      setTimeout(() => go(''), 820);
+    };
+    let done = false;
+    const bail = setTimeout(() => { if (!done) { done = true; go(''); } }, 3000);
+    Promise.race([curtain('open'), new Promise(r => setTimeout(() => r(null), 700))]).then(c => {
+      if (done) return;
+      if (!c) { done = true; clearTimeout(bail); return flat(); }
+      c.close().then(() => { if (done) return; done = true; clearTimeout(bail); go(c.still(.82)); });
+    });
   });
   // back/forward from the cache: don't come back to a closed stage
-  addEventListener('pageshow', e => { if (e.persisted) { clearCurtains(); if (lenis) lenis.start(); try { sessionStorage.removeItem('rr-curtain'); } catch (_) {} } });
+  addEventListener('pageshow', e => {
+    if (!e.persisted) return;
+    leaving = false; clearCurtains(); if (cur) cur.hide(); if (lenis) lenis.start();
+    try { sessionStorage.removeItem('rr-curtain'); } catch (_) {}
+  });
 
   /* loader: hold on the curtains until the page is ready, then part them */
   if (intro && performance.now() > 10400) {
