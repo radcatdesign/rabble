@@ -147,6 +147,8 @@ a,button{-webkit-tap-highlight-color:transparent}
 @keyframes bump{40%{transform:scale(1.15)}}
 .topbar{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 22px);right:var(--gutter);display:flex;align-items:center;gap:10px}
 .live-pill{display:inline-flex;align-items:center;gap:10px;height:46px;padding:0 18px;border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 26%,transparent);background:color-mix(in srgb,var(--ink) 35%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font:500 11px/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--text);white-space:nowrap;transition:border-color .3s,background-color .3s}
+.nav-merch{padding:0 20px}
+@media (max-width:640px){.nav-merch{display:none}}
 .live-pill:hover{border-color:var(--text);background-color:color-mix(in srgb,var(--text) 8%,transparent)}
 @media (max-width:380px){.live-pill{padding:0 12px;letter-spacing:.14em}}
 .topbar .menu-btn{width:46px;padding:0;justify-content:center}
@@ -522,6 +524,7 @@ main{position:relative;z-index:1}
 
 <div class="topbar hero-anim">
   <a class="live-pill" href="#episodes"><span class="live-dot"></span>Now streaming</a>
+  <a class="live-pill nav-merch" href="store.html">Merch</a>
   <a class="icon-btn" href="#join" aria-label="Subscribe by email"><svg aria-hidden="true"><use href="#mail"/></svg></a>
   <a class="icon-btn bag-btn" href="store.html" aria-label="Your bag"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 12.2a1 1 0 0 1-1 .8H7.2a1 1 0 0 1-1-.8L5 8Z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/></svg><span class="bag-count">0</span></a>
   <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu" aria-label="Menu"><span class="menu-icon" aria-hidden="true"><i></i><i></i></span></button>

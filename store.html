@@ -148,6 +148,8 @@ a,button{-webkit-tap-highlight-color:transparent}
 @keyframes bump{40%{transform:scale(1.15)}}
 .topbar{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 22px);right:var(--gutter);display:flex;align-items:center;gap:10px}
 .live-pill{display:inline-flex;align-items:center;gap:10px;height:46px;padding:0 18px;border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 26%,transparent);background:color-mix(in srgb,var(--ink) 35%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font:500 11px/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--text);white-space:nowrap;transition:border-color .3s,background-color .3s}
+.nav-merch{padding:0 20px}
+@media (max-width:640px){.nav-merch{display:none}}
 .live-pill:hover{border-color:var(--text);background-color:color-mix(in srgb,var(--text) 8%,transparent)}
 @media (max-width:380px){.live-pill{padding:0 12px;letter-spacing:.14em}}
 .topbar .menu-btn{width:46px;padding:0;justify-content:center}
