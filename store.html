@@ -510,7 +510,7 @@ main{position:relative;z-index:1}
 .shop-perks svg{width:10px;height:10px;fill:var(--magenta)}
 
 .shop{position:relative;padding-bottom:clamp(90px,11vw,160px)}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(14px,1.8vw,26px)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr;gap:clamp(14px,1.8vw,26px)}
 @media (max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:560px){.grid{grid-template-columns:1fr}}
 .prod{display:grid;grid-template-rows:auto 1fr;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:color-mix(in srgb,var(--ink-2) 82%,transparent);
