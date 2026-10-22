@@ -47,3 +47,10 @@ Workers & Pages → Create → Pages → Connect to Git → `radcatdesign/rabble
 3. Swap in the live Stripe key and its live webhook secret, set `PRINTFUL_AUTO_CONFIRM` to `true`, redeploy.
 
 When rabbleandrouse.com moves over, add it under the Vercel project's Domains and update `SITE_URL`. Keep the `join` subdomain and the email (MX) records as they are.
+
+## Newsletter signups
+Every email form on the site posts to `/api/subscribe`, which adds the address to the Mailchimp audience behind join.rabbleandrouse.com. It works with no setup, using Mailchimp's public signup endpoint.
+
+Optional, in Vercel → Environment Variables:
+- `MAILCHIMP_API_KEY`: switches to the Mailchimp API and tags each signup with where it came from (`website` plus `index`, `episode-1`, `merch`, `episode-2-notify`).
+- `MAILCHIMP_DOUBLE_OPTIN`: `true` sends a confirmation email before adding someone.

@@ -147,17 +147,17 @@ a,button{-webkit-tap-highlight-color:transparent}
 .bag-btn.bump{animation:bump .5s var(--ease)}
 @keyframes bump{40%{transform:scale(1.15)}}
 .topbar{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 22px);right:var(--gutter);display:flex;align-items:center;gap:10px}
-.live-pill{display:inline-flex;align-items:center;gap:10px;height:46px;padding:0 18px;border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 26%,transparent);background:color-mix(in srgb,var(--ink) 35%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font:500 11px/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--text);white-space:nowrap;transition:border-color .3s,background-color .3s}
+.live-pill{display:inline-flex;align-items:center;gap:10px;height:46px;padding:0 18px;border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 15%,transparent);background:color-mix(in srgb,var(--ink) 35%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);font:500 11px/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--text);white-space:nowrap;transition:border-color .3s,background-color .3s}
 .nav-merch{padding:0 20px}
 @media (max-width:640px){.nav-merch{display:none}}
 .live-pill:hover{border-color:var(--text);background-color:color-mix(in srgb,var(--text) 8%,transparent)}
 @media (max-width:380px){.live-pill{padding:0 12px;letter-spacing:.14em}}
 .topbar .menu-btn{width:46px;padding:0;justify-content:center}
-.icon-btn{display:grid;place-items:center;width:46px;height:46px;border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 26%,transparent);background:color-mix(in srgb,var(--ink) 35%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--text);transition:border-color .3s,background-color .3s,color .3s}
+.icon-btn{display:grid;place-items:center;width:46px;height:46px;border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 15%,transparent);background:color-mix(in srgb,var(--ink) 35%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--text);transition:border-color .3s,background-color .3s,color .3s}
 .icon-btn:hover{border-color:var(--magenta);color:var(--magenta-soft);background-color:color-mix(in srgb,var(--magenta) 10%,transparent)}
 .icon-btn svg{width:19px;height:19px;fill:currentColor}
 .menu-btn{display:inline-flex;align-items:center;gap:12px;height:46px;padding:0 20px 0 16px;
-  border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 26%,transparent);background:color-mix(in srgb,var(--ink) 35%,transparent);
+  border-radius:999px;border:1px solid color-mix(in srgb,var(--text) 15%,transparent);background:color-mix(in srgb,var(--ink) 35%,transparent);
   -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--text);font:600 14px/1 var(--f-body);letter-spacing:.02em;cursor:pointer;transition:border-color .3s,background-color .3s}
 .menu-btn:hover{border-color:var(--text);background-color:color-mix(in srgb,var(--text) 8%,transparent)}
 .menu-icon{display:grid;gap:5px}
@@ -390,6 +390,7 @@ main{position:relative;z-index:1}
 .form-note{margin:0;min-height:1.5em;font-size:14px;color:var(--muted)}
 .form-note.ok{color:var(--cyan)}
 .form-note.err{color:var(--magenta-soft)}
+.form-note a,.ep-note a{color:inherit;text-decoration:underline}
 .yt-link{display:inline-flex;align-items:center;gap:10px;justify-self:start;margin-top:6px;font-weight:600;font-size:15px;color:var(--text);border-bottom:1px solid color-mix(in srgb,var(--magenta) 60%,transparent);padding-bottom:3px;transition:border-color .3s,color .3s}
 .yt-link:hover{color:var(--magenta-soft);border-bottom-color:var(--magenta)}
 .yt-link svg{width:18px;height:18px;fill:currentColor}
@@ -498,7 +499,7 @@ main{position:relative;z-index:1}
 
 /* ---------- episode page ---------- */
 .backlink{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 22px);left:var(--gutter);display:inline-flex;align-items:center;gap:10px;height:46px;padding:0 18px 0 14px;border-radius:999px;
-  border:1px solid color-mix(in srgb,var(--text) 26%,transparent);background:color-mix(in srgb,var(--ink) 35%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border:1px solid color-mix(in srgb,var(--text) 15%,transparent);background:color-mix(in srgb,var(--ink) 35%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
   font:500 11px/1 var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:var(--text);white-space:nowrap;transition:border-color .3s,background-color .3s}
 .backlink:hover{border-color:var(--text);background-color:color-mix(in srgb,var(--text) 8%,transparent)}
 .backlink svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .45s var(--ease)}
@@ -857,9 +858,9 @@ dispatchEvent(new Event('three-ready'));
   const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
   const hasGsap = !!(window.gsap && window.ScrollTrigger);
   const SRC = { preview: 'media/preview.mp4', ep1: 'media/ep1.mp4' };
-  /* signups: paste the Mailchimp embedded form action (…list-manage.com/subscribe/post?u=…&id=…) to send straight to the list */
-  const MC_ACTION = ''.indexOf('http') === 0 ? '' : '';
-  const JOIN_URL = 'http://join.rabbleandrouse.com/';
+  /* signups go to the Mailchimp list through the site's own /api/subscribe (copies of the site use the live one) */
+  const SITE_API = /vercel\.app$|rabbleandrouse\.com$/.test(location.hostname) ? 'api' : 'https://rabble-rouse.vercel.app/api';
+  const JOIN_URL = 'https://join.rabbleandrouse.com/';
   const ytEmbed = id => `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1&modestbranding=1`;
   const ytFrame = (id, label) => {
     const f = document.createElement('iframe');
@@ -1138,46 +1139,34 @@ dispatchEvent(new Event('three-ready'));
   }));
 
   /* ---------- signup forms: straight into the Mailchimp list ---------- */
-  function subscribe(email) {
-    return new Promise((resolve, reject) => {
-      const cb = 'rrmc' + Date.now() + Math.floor(Math.random() * 1e4);
-      const tag = document.createElement('script');
-      const done = () => { clearTimeout(timer); delete window[cb]; tag.remove(); };
-      const timer = setTimeout(() => { done(); reject(new Error('timeout')); }, 12000);
-      window[cb] = d => {
-        done();
-        const msg = (d && d.msg) || '';
-        if (d && d.result === 'success') resolve('new');
-        else if (/already subscribed/i.test(msg)) resolve('already');
-        else reject(new Error(msg.replace(/<[^>]+>/g, '').replace(/^\d+ - /, '') || 'error'));
-      };
-      tag.onerror = () => { done(); reject(new Error('network')); };
-      tag.src = MC_ACTION.replace('/post?', '/post-json?') + '&EMAIL=' + encodeURIComponent(email) + '&c=' + cb;
-      document.head.append(tag);
-    });
+  async function subscribe(email, source) {
+    const res = await fetch(`${SITE_API}/subscribe`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, source }) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'network');
+    return data.status;
   }
-  function wireSignup(form, input, note, words) {
+  const page = (location.pathname.split('/').pop() || 'index.html').replace('.html', '') || 'index';
+  function wireSignup(form, input, note, words, source) {
     if (!form) return;
     form.addEventListener('submit', e => {
       e.preventDefault();
       note.classList.remove('ok', 'err');
       if (!input.value.trim() || !input.checkValidity()) { note.textContent = words.bad; note.classList.add('err'); input.focus(); return; }
-      if (!MC_ACTION) {
-        // until the list endpoint is set, hand off to the hosted signup page
-        window.open(JOIN_URL, '_blank', 'noopener');
-        note.textContent = 'Almost there. Finish signing up in the new tab.'; note.classList.add('ok');
-        return;
-      }
       const btn = $('button[type="submit"]', form);
       btn.disabled = true; note.textContent = 'Adding you…';
-      subscribe(input.value.trim())
+      subscribe(input.value.trim(), source)
         .then(kind => { note.textContent = kind === 'already' ? "You're already on the list. Good taste." : words.ok; note.classList.add('ok'); form.reset(); })
-        .catch(err => { note.textContent = err.message && !/timeout|network|error/.test(err.message) ? err.message : 'Something went sideways. Try again in a sec.'; note.classList.add('err'); })
+        .catch(err => {
+          note.innerHTML = err.message && err.message !== 'network' && !/Failed to fetch/i.test(err.message)
+            ? err.message.replace(/[<>&]/g, '')
+            : `Couldn't reach the list. <a href="${JOIN_URL}" target="_blank" rel="noopener">Sign up here instead</a>.`;
+          note.classList.add('err');
+        })
         .finally(() => { btn.disabled = false; });
     });
   }
-  $$('.ep-notify').forEach(f => wireSignup(f, $('input', f), $('.ep-note', f), { bad: 'That email looks off. Try again.', ok: "You're on the list. We'll ping you when it drops." }));
-  wireSignup($('#joinForm'), $('#email'), $('#formNote'), { bad: 'That email address looks off. Check it and try again.', ok: "You're in. Welcome to the rabble." });
+  $$('.ep-notify').forEach(f => wireSignup(f, $('input', f), $('.ep-note', f), { bad: 'That email looks off. Try again.', ok: "You're on the list. We'll ping you when it drops." }, 'episode-2-notify'));
+  wireSignup($('#joinForm'), $('#email'), $('#formNote'), { bad: 'That email address looks off. Check it and try again.', ok: "You're in. Welcome to the rabble." }, page === 'store' ? 'merch' : page);
 
   /* ---------- footer sign fits its width ---------- */
   const word = $('#marqueeWord');
