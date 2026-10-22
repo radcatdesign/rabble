@@ -9,6 +9,23 @@ if (location.hostname === 'radcatdesign.github.io') location.replace('https://ra
 try { if (sessionStorage.getItem('rr-curtain')) { sessionStorage.removeItem('rr-curtain'); var h = document.documentElement, still = sessionStorage.getItem('rr-curtain-still'); h.classList.add('rr-cur', 'rr-shut'); if (still) { h.classList.add('rr-snap'); h.style.setProperty('--rr-snap', 'url(' + still + ')'); sessionStorage.removeItem('rr-curtain-still'); } setTimeout(function () { if (!window.rrStage) document.documentElement.classList.remove('rr-cur', 'rr-shut'); }, 3000); } } catch (e) {}</script>
 <title>Episode 01: Cheryl Katon · Rabble &amp; Rouse</title>
 <meta name="description" content="Rabble &amp; Rouse with Katie Martell, Episode 01. Katie sits down with Cheryl Katon to discuss growing up trans, living authentically, and the cost of visibility.">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="media/favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#07060c">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Rabble &amp; Rouse">
+<meta property="og:title" content="Episode 01: Cheryl Katon · Rabble &amp; Rouse">
+<meta property="og:description" content="Rabble &amp; Rouse with Katie Martell, Episode 01. Katie sits down with Cheryl Katon to discuss growing up trans, living authentically, and the cost of visibility.">
+<meta property="og:url" content="https://rabble-rouse.vercel.app/episode-1.html">
+<meta property="og:image" content="https://rabble-rouse.vercel.app/media/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="628">
+<meta property="og:image:alt" content="Rabble &amp; Rouse with Katie Martell neon sign in front of blue velvet stage curtains">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Episode 01: Cheryl Katon · Rabble &amp; Rouse">
+<meta name="twitter:description" content="Rabble &amp; Rouse with Katie Martell, Episode 01. Katie sits down with Cheryl Katon to discuss growing up trans, living authentically, and the cost of visibility.">
+<meta name="twitter:image" content="https://rabble-rouse.vercel.app/media/og.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
