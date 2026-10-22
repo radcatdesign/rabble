@@ -507,6 +507,9 @@ main{position:relative;z-index:1}
 
 .shop-hero{position:relative;padding-block:clamp(150px,18vw,230px) clamp(40px,5vw,70px)}
 .shop-hero .wrap{display:grid;gap:22px}
+#shopBall{position:absolute;inset:0;width:100%!important;height:100%!important;display:block;z-index:0;pointer-events:none;opacity:0;transition:opacity 1.2s var(--ease)}
+#shopBall.on{opacity:1}
+.shop-hero .wrap{position:relative;z-index:1}
 .shop-title{margin:0;font:900 clamp(4.6rem,15vw,14rem)/.86 var(--f-display);text-transform:uppercase;letter-spacing:-.005em}
 .shop-sub{margin:0;max-width:44ch;font-size:clamp(1.05rem,1.35vw,1.22rem);color:color-mix(in srgb,var(--text) 82%,transparent)}
 .shop-perks{display:flex;flex-wrap:wrap;gap:10px 22px;margin:6px 0 0;padding:0;list-style:none;font:500 11px/1 var(--f-mono);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
@@ -657,6 +660,7 @@ main{position:relative;z-index:1}
 
 <main>
   <section class="shop-hero" id="top" aria-labelledby="shop-title">
+    <canvas id="shopBall" aria-hidden="true"></canvas>
     <div class="wrap">
       <p class="label hero-anim"><svg aria-hidden="true"><use href="#spark"/></svg>Official merch</p>
       <h1 class="shop-title hero-anim" id="shop-title">Wear the <span class="grad-text">rabble</span></h1>
@@ -752,6 +756,120 @@ main{position:relative;z-index:1}
 import * as THREE from './vendor/three.module.js';
 window.THREE = THREE;
 dispatchEvent(new Event('three-ready'));
+
+/* ---------- merch: a mirror ball hanging to the right of the title ---------- */
+(() => {
+  const canvas = document.getElementById('shopBall');
+  if (!canvas) return;
+  try {
+    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
+    renderer.setClearColor(0x000000, 0);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(32, 1, .1, 100);
+    camera.position.set(0, 0, 14);
+
+    // the ball: hundreds of small square mirrors on a sphere, each a hair off-angle so they catch light one by one
+    const R = 2.6, rings = 30, tiles = [];
+    for (let i = 1; i < rings; i++) {
+      const phi = Math.PI * i / rings, count = Math.max(6, Math.round(rings * 2 * Math.sin(phi)));
+      for (let j = 0; j < count; j++) tiles.push([phi, (j + (i % 2) * .5) / count * Math.PI * 2]);
+    }
+    const size = (Math.PI * R / rings) * .86;
+    const mirrors = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(size, size, .05),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: .85, roughness: .18, flatShading: true }),
+      tiles.length);
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), pos = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), look = new THREE.Object3D();
+    const base = [], col = new THREE.Color();
+    tiles.forEach(([phi, th], k) => {
+      pos.set(R * Math.sin(phi) * Math.cos(th), R * Math.cos(phi), R * Math.sin(phi) * Math.sin(th));
+      look.position.copy(pos); look.lookAt(pos.clone().multiplyScalar(2));
+      e.set((Math.random() - .5) * .14, (Math.random() - .5) * .14, 0); q.setFromEuler(e);
+      look.quaternion.multiply(q);
+      m.compose(pos, look.quaternion, one); mirrors.setMatrixAt(k, m);
+      const tint = Math.random();
+      base.push(tint < .78 ? new THREE.Color(.62, .62, .7) : tint < .89 ? new THREE.Color(.95, .55, .8) : new THREE.Color(.55, .7, 1));
+      mirrors.setColorAt(k, base[k]);
+    });
+    const ball = new THREE.Group();
+    ball.add(mirrors);
+    // a dark core so gaps between mirrors read as grout, not see-through
+    ball.add(new THREE.Mesh(new THREE.SphereGeometry(R * .97, 32, 24), new THREE.MeshBasicMaterial({ color: 0x0b0912 })));
+    const rig = new THREE.Group();
+    rig.add(ball);
+    // the rod it hangs from
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 40, 6), new THREE.MeshBasicMaterial({ color: 0x3a3450 }));
+    rod.position.y = R + 20; rig.add(rod);
+    scene.add(rig);
+
+    scene.add(new THREE.AmbientLight(0x8a7fb0, .35));
+    const lights = [[0xff2d95, 60], [0x2f86ff, 60], [0xffffff, 38], [0xb44cff, 40]].map(([c, i]) => { const l = new THREE.PointLight(c, i, 30, 1.6); scene.add(l); return l; });
+
+    let w = 0, h = 0;
+    const title = document.getElementById('shop-title');
+    const fit = force => {
+      const r = canvas.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      if (force !== true && r.width === w && r.height === h) return;
+      w = r.width; h = r.height;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+      const unit = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z / h; // world units per px
+      // the title's actual text box (not the full-width h1), measured line by line
+      const range = document.createRange(); range.selectNodeContents(title);
+      const lines = [...range.getClientRects()];
+      const tb = title.getBoundingClientRect();
+      const right = Math.max(...lines.map(l => l.right)) - r.left, top = tb.top - r.top, mid = top + tb.height / 2;
+      const margin = Math.max(16, w * .04);
+      let rad = Math.min(220, Math.max(70, tb.height * .42, w * .11)), cx, cy;
+      if (w - margin - right >= rad * 2 + 24) { cx = Math.min(w - margin - rad, right + 24 + rad + (w - margin - right - rad * 2 - 24) * .35); cy = mid; }
+      else { rad = Math.min(rad, Math.max(48, top * .3), w * .15); cx = w - margin - rad; cy = Math.max(rad + 12, top - rad - 14); } // no room beside it: hang above, top right
+      rig.position.set((cx - w / 2) * unit, (h / 2 - cy) * unit, 0);
+      rig.scale.setScalar(rad * unit / R);
+    };
+    fit(true); addEventListener('resize', fit);
+    document.fonts && document.fonts.ready.then(() => fit(true));
+    setTimeout(() => fit(true), 1600);
+    canvas.classList.add('on');
+
+    let px = 0, py = 0, tx = 0, ty = 0;
+    addEventListener('pointermove', ev => { tx = ev.clientX / innerWidth - .5; ty = ev.clientY / innerHeight - .5; });
+    let visible = true, raf = 0, last = performance.now(), t = 0;
+    const sparkle = new Set();
+    const frame = now => {
+      const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
+      ball.rotation.y += dt * .22;
+      px += (tx - px) * .05; py += (ty - py) * .05;
+      rig.rotation.z = Math.sin(t * .5) * .02 - px * .12;
+      ball.rotation.x = py * .25;
+      lights.forEach((l, i) => {
+        const a = t * (.35 + i * .07) + i * 1.7;
+        l.position.set(Math.cos(a) * 7, Math.sin(a * .8 + i) * 4 + 1, 6 + Math.sin(a) * 2);
+        l.position.add(rig.position);
+      });
+      // a few mirrors flash white at a time
+      if (Math.random() < .5) sparkle.add({ k: Math.floor(Math.random() * tiles.length), life: 1 });
+      for (const sp of sparkle) {
+        sp.life -= dt * 2.6;
+        col.copy(base[sp.k]).lerp(new THREE.Color(1, 1, 1), Math.max(0, sp.life) * 1.4);
+        mirrors.setColorAt(sp.k, col);
+        if (sp.life <= 0) { mirrors.setColorAt(sp.k, base[sp.k]); sparkle.delete(sp); }
+      }
+      mirrors.instanceColor.needsUpdate = true;
+      renderer.render(scene, camera);
+      if (visible && !calm) raf = requestAnimationFrame(frame);
+    };
+    new IntersectionObserver(([en]) => {
+      visible = en.isIntersecting; fit(true);
+      cancelAnimationFrame(raf);
+      if (visible) { last = performance.now(); raf = requestAnimationFrame(frame); }
+    }).observe(canvas);
+    requestAnimationFrame(frame);
+  } catch (err) { canvas.remove(); }
+})();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>

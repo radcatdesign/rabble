@@ -61,15 +61,12 @@ async function findApiStore(env) {
 export class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
 
 const cents = v => Math.round(parseFloat(v) * 100);
-// the print file itself (the design), useful when Printful's mockup comes out blank
-const artImage = v => {
-  const f = (v.files || []).find(f => f.type === 'default' && (f.preview_url || f.thumbnail_url));
-  return (f && (f.preview_url || f.thumbnail_url)) || '';
-};
-const variantImage = v => {
+const mockup = v => {
   const preview = (v.files || []).find(f => f.type === 'preview' && (f.preview_url || f.thumbnail_url));
-  return (preview && (preview.preview_url || preview.thumbnail_url)) || (v.product && v.product.image) || '';
+  return (preview && (preview.preview_url || preview.thumbnail_url)) || '';
 };
+// Printful's catalog photo (blank product) is the last resort, never ahead of a real mockup
+const variantImage = v => mockup(v) || (v.product && v.product.image) || '';
 
 /* ---------- products: everything synced in the Printful store, shaped for the Merch page ---------- */
 export async function listProducts(env) {
@@ -85,11 +82,16 @@ export async function listProducts(env) {
         color: v.color || '',
         price: cents(v.retail_price),
         currency: (v.currency || 'USD').toLowerCase(),
-        image: variantImage(v),
-        art: artImage(v),
+        image: mockup(v),
+        catalog: (v.product && v.product.image) || '',
         available: !v.availability_status || v.availability_status === 'active'
       }))
       .filter(v => v.price > 0);
+    // variants without their own mockup borrow one: same color first, then the product thumbnail
+    for (const v of variants) {
+      if (!v.image) v.image = (variants.find(o => o.image && o.color === v.color && o.catalog !== o.image) || {}).image || p.thumbnail_url || v.catalog;
+      delete v.catalog;
+    }
     return { id: p.id, name: p.name, image: p.thumbnail_url || (variants[0] && variants[0].image) || '', variants };
   }).filter(p => p.variants.length);
 }
