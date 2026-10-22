@@ -780,7 +780,7 @@ dispatchEvent(new Event('three-ready'));
     const size = (Math.PI * R / rings) * .86;
     const mirrors = new THREE.InstancedMesh(
       new THREE.BoxGeometry(size, size, .05),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: .85, roughness: .18, flatShading: true }),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: .06, envMapIntensity: 1.35, flatShading: true }),
       tiles.length);
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), pos = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), look = new THREE.Object3D();
     const base = [], col = new THREE.Color();
@@ -791,7 +791,7 @@ dispatchEvent(new Event('three-ready'));
       look.quaternion.multiply(q);
       m.compose(pos, look.quaternion, one); mirrors.setMatrixAt(k, m);
       const tint = Math.random();
-      base.push(tint < .78 ? new THREE.Color(.62, .62, .7) : tint < .89 ? new THREE.Color(.95, .55, .8) : new THREE.Color(.55, .7, 1));
+      base.push(tint < .84 ? new THREE.Color(.8, .8, .84) : tint < .92 ? new THREE.Color(.95, .72, .86) : new THREE.Color(.72, .82, 1));
       mirrors.setColorAt(k, base[k]);
     });
     const ball = new THREE.Group();
@@ -805,7 +805,32 @@ dispatchEvent(new Event('three-ready'));
     rod.position.y = R + 20; rig.add(rod);
     scene.add(rig);
 
-    scene.add(new THREE.AmbientLight(0x8a7fb0, .35));
+    // a painted room for the mirrors to reflect: dark club, neon in the show's colors, a few hot lamps
+    const env = (() => {
+      const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
+      const g = c.getContext('2d');
+      const bg = g.createLinearGradient(0, 0, 0, 512);
+      bg.addColorStop(0, '#2a2140'); bg.addColorStop(.42, '#120e1e'); bg.addColorStop(.6, '#0a0812'); bg.addColorStop(1, '#05040a');
+      g.fillStyle = bg; g.fillRect(0, 0, 1024, 512);
+      const blob = (x, y, rx, ry, color, a) => {
+        g.save(); g.translate(x, y); g.scale(rx / ry, 1);
+        const r = g.createRadialGradient(0, 0, 0, 0, 0, ry);
+        r.addColorStop(0, color); r.addColorStop(1, 'rgba(0,0,0,0)');
+        g.globalAlpha = a; g.fillStyle = r; g.beginPath(); g.arc(0, 0, ry, 0, Math.PI * 2); g.fill(); g.restore();
+      };
+      [[120, 250, '#ff2d95'], [380, 230, '#2f86ff'], [620, 260, '#b44cff'], [880, 240, '#ff2d95'], [1010, 250, '#2f86ff'], [250, 300, '#b44cff'], [760, 300, '#2f86ff']]
+        .forEach(([x, y, col]) => blob(x, y, 150, 70, col, .9));
+      for (let x = 0; x < 1024; x += 128) blob(x + 64, 40, 60, 14, '#ffffff', .85); // ceiling strip lights
+      [[200, 150], [470, 110], [700, 160], [930, 120], [90, 120]].forEach(([x, y]) => { blob(x, y, 26, 26, '#ffffff', 1); blob(x, y, 8, 8, '#ffffff', 1); });
+      blob(512, 470, 520, 60, '#3a1630', .7); // stage glow off the floor
+      const t = new THREE.CanvasTexture(c);
+      t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace;
+      const pm = new THREE.PMREMGenerator(renderer);
+      const out = pm.fromEquirectangular(t).texture; t.dispose(); pm.dispose();
+      return out;
+    })();
+    scene.environment = env;
+    scene.add(new THREE.AmbientLight(0x8a7fb0, .2));
     const lights = [[0xff2d95, 60], [0x2f86ff, 60], [0xffffff, 38], [0xb44cff, 40]].map(([c, i]) => { const l = new THREE.PointLight(c, i, 30, 1.6); scene.add(l); return l; });
 
     let w = 0, h = 0;
@@ -824,8 +849,11 @@ dispatchEvent(new Event('three-ready'));
       const tb = title.getBoundingClientRect();
       const right = Math.max(...lines.map(l => l.right)) - r.left, top = tb.top - r.top, mid = top + tb.height / 2;
       const margin = Math.max(16, w * .04);
-      let rad = Math.min(220, Math.max(70, tb.height * .42, w * .11)), cx, cy;
-      if (w - margin - right >= rad * 2 + 24) { cx = Math.min(w - margin - rad, right + 24 + rad + (w - margin - right - rad * 2 - 24) * .35); cy = mid; }
+      let rad = Math.min(310, Math.max(80, tb.height * .62, w * .17)), cx, cy;
+      if (w - margin - right >= rad * 1.4) {
+        cx = Math.max(right + rad * .7, w - margin - rad - Math.max(0, w - margin - right - rad * 2 - 24) * .35);
+        cy = Math.max(rad + 60, top + tb.height * .18); // raised: rides high beside the title
+      }
       else { rad = Math.min(rad, Math.max(48, top * .3), w * .15); cx = w - margin - rad; cy = Math.max(rad + 12, top - rad - 14); } // no room beside it: hang above, top right
       rig.position.set((cx - w / 2) * unit, (h / 2 - cy) * unit, 0);
       rig.scale.setScalar(rad * unit / R);
@@ -838,7 +866,7 @@ dispatchEvent(new Event('three-ready'));
     let px = 0, py = 0, tx = 0, ty = 0;
     addEventListener('pointermove', ev => { tx = ev.clientX / innerWidth - .5; ty = ev.clientY / innerHeight - .5; });
     let visible = true, raf = 0, last = performance.now(), t = 0;
-    const sparkle = new Set();
+    const sparkle = new Set(), hot = new THREE.Color(2.6, 2.6, 2.8);
     const frame = now => {
       const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
       ball.rotation.y += dt * .22;
@@ -854,7 +882,7 @@ dispatchEvent(new Event('three-ready'));
       if (Math.random() < .5) sparkle.add({ k: Math.floor(Math.random() * tiles.length), life: 1 });
       for (const sp of sparkle) {
         sp.life -= dt * 2.6;
-        col.copy(base[sp.k]).lerp(new THREE.Color(1, 1, 1), Math.max(0, sp.life) * 1.4);
+        col.copy(base[sp.k]).lerp(hot, Math.max(0, Math.min(1, sp.life * 1.4)));
         mirrors.setColorAt(sp.k, col);
         if (sp.life <= 0) { mirrors.setColorAt(sp.k, base[sp.k]); sparkle.delete(sp); }
       }
