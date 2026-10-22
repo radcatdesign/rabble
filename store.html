@@ -780,7 +780,7 @@ dispatchEvent(new Event('three-ready'));
     const size = (Math.PI * R / rings) * .86;
     const mirrors = new THREE.InstancedMesh(
       new THREE.BoxGeometry(size, size, .05),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: .06, envMapIntensity: 1.35, flatShading: true }),
+      new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: .06, envMapIntensity: 1.8, flatShading: true }),
       tiles.length);
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), pos = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), look = new THREE.Object3D();
     const base = [], col = new THREE.Color();
@@ -798,19 +798,19 @@ dispatchEvent(new Event('three-ready'));
     ball.add(mirrors);
     // a dark core so gaps between mirrors read as grout, not see-through
     ball.add(new THREE.Mesh(new THREE.SphereGeometry(R * .97, 32, 24), new THREE.MeshBasicMaterial({ color: 0x0b0912 })));
-    const rig = new THREE.Group();
-    rig.add(ball);
-    // the rod it hangs from
-    const rod = new THREE.Mesh(new THREE.CylinderGeometry(.03, .03, 40, 6), new THREE.MeshBasicMaterial({ color: 0x3a3450 }));
-    rod.position.y = R + 20; rig.add(rod);
-    scene.add(rig);
+    // pivot sits where the string meets the ceiling, so any sway swings from the top, not the ball's middle
+    const pivot = new THREE.Group(), hang = new THREE.Group();
+    hang.add(ball); pivot.add(hang);
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, 1, 6), new THREE.MeshBasicMaterial({ color: 0x3a3450 }));
+    pivot.add(rod);
+    scene.add(pivot);
 
     // a painted room for the mirrors to reflect: dark club, neon in the show's colors, a few hot lamps
     const env = (() => {
       const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
       const g = c.getContext('2d');
       const bg = g.createLinearGradient(0, 0, 0, 512);
-      bg.addColorStop(0, '#2a2140'); bg.addColorStop(.42, '#120e1e'); bg.addColorStop(.6, '#0a0812'); bg.addColorStop(1, '#05040a');
+      bg.addColorStop(0, '#6a5a8c'); bg.addColorStop(.3, '#3a2f55'); bg.addColorStop(.55, '#1e1830'); bg.addColorStop(1, '#0e0b16');
       g.fillStyle = bg; g.fillRect(0, 0, 1024, 512);
       const blob = (x, y, rx, ry, color, a) => {
         g.save(); g.translate(x, y); g.scale(rx / ry, 1);
@@ -819,7 +819,7 @@ dispatchEvent(new Event('three-ready'));
         g.globalAlpha = a; g.fillStyle = r; g.beginPath(); g.arc(0, 0, ry, 0, Math.PI * 2); g.fill(); g.restore();
       };
       [[120, 250, '#ff2d95'], [380, 230, '#2f86ff'], [620, 260, '#b44cff'], [880, 240, '#ff2d95'], [1010, 250, '#2f86ff'], [250, 300, '#b44cff'], [760, 300, '#2f86ff']]
-        .forEach(([x, y, col]) => blob(x, y, 150, 70, col, .9));
+        .forEach(([x, y, col]) => blob(x, y, 190, 95, col, 1));
       for (let x = 0; x < 1024; x += 128) blob(x + 64, 40, 60, 14, '#ffffff', .85); // ceiling strip lights
       [[200, 150], [470, 110], [700, 160], [930, 120], [90, 120]].forEach(([x, y]) => { blob(x, y, 26, 26, '#ffffff', 1); blob(x, y, 8, 8, '#ffffff', 1); });
       blob(512, 470, 520, 60, '#3a1630', .7); // stage glow off the floor
@@ -849,14 +849,16 @@ dispatchEvent(new Event('three-ready'));
       const tb = title.getBoundingClientRect();
       const right = Math.max(...lines.map(l => l.right)) - r.left, top = tb.top - r.top, mid = top + tb.height / 2;
       const margin = Math.max(16, w * .04);
-      let rad = Math.min(310, Math.max(80, tb.height * .62, w * .17)), cx, cy;
-      if (w - margin - right >= rad * 1.4) {
-        cx = Math.max(right + rad * .7, w - margin - rad - Math.max(0, w - margin - right - rad * 2 - 24) * .35);
-        cy = Math.max(rad + 60, top + tb.height * .18); // raised: rides high beside the title
+      let rad = Math.min(260, Math.max(80, tb.height * .64, w * .165)), cx, cy;
+      if (w - margin - right >= rad * 1.6) {
+        cx = Math.min(w - margin - rad, right + 30 + rad + Math.max(0, w - margin - right - rad * 2 - 30) * .35);
+        cy = Math.max(rad + 92, top + tb.height * .3); // raised: rides high beside the title, clear of the nav
       }
       else { rad = Math.min(rad, Math.max(48, top * .3), w * .15); cx = w - margin - rad; cy = Math.max(rad + 12, top - rad - 14); } // no room beside it: hang above, top right
-      rig.position.set((cx - w / 2) * unit, (h / 2 - cy) * unit, 0);
-      rig.scale.setScalar(rad * unit / R);
+      const s = rad * unit / R, topY = h / 2 * unit + .5, ballY = (h / 2 - cy) * unit, arm = topY - ballY;
+      pivot.position.set((cx - w / 2) * unit, topY, 0);
+      hang.position.y = -arm; hang.scale.setScalar(s);
+      rod.scale.set(s, arm - R * s, s); rod.position.y = -(arm - R * s) / 2;
     };
     fit(true); addEventListener('resize', fit);
     document.fonts && document.fonts.ready.then(() => fit(true));
@@ -866,17 +868,17 @@ dispatchEvent(new Event('three-ready'));
     let px = 0, py = 0, tx = 0, ty = 0;
     addEventListener('pointermove', ev => { tx = ev.clientX / innerWidth - .5; ty = ev.clientY / innerHeight - .5; });
     let visible = true, raf = 0, last = performance.now(), t = 0;
-    const sparkle = new Set(), hot = new THREE.Color(2.6, 2.6, 2.8);
+    const at = new THREE.Vector3(), sparkle = new Set(), hot = new THREE.Color(2.6, 2.6, 2.8);
     const frame = now => {
       const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
       ball.rotation.y += dt * .22;
       px += (tx - px) * .05; py += (ty - py) * .05;
-      rig.rotation.z = Math.sin(t * .5) * .02 - px * .12;
+      pivot.rotation.z = Math.sin(t * .5) * .012 - px * .06;
       ball.rotation.x = py * .25;
       lights.forEach((l, i) => {
         const a = t * (.35 + i * .07) + i * 1.7;
         l.position.set(Math.cos(a) * 7, Math.sin(a * .8 + i) * 4 + 1, 6 + Math.sin(a) * 2);
-        l.position.add(rig.position);
+        l.position.add(hang.getWorldPosition(at));
       });
       // a few mirrors flash white at a time
       if (Math.random() < .5) sparkle.add({ k: Math.floor(Math.random() * tiles.length), life: 1 });
