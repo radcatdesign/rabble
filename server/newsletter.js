@@ -6,7 +6,8 @@
                  MAILCHIMP_DOUBLE_OPTIN ("true" sends a confirm email first), MAILCHIMP_FORM_URL */
 import { HttpError } from './store.js';
 
-const FORM = 'https://mc.us16.list-manage.com/subscribe/post-json?u=ce1b58add8c1efd13b6b9c915&id=b9fe5c7621&f_id=008ec2e1f0';
+// the public endpoint that answers JSON when given a callback name (post-json 404s for this audience)
+const FORM = 'https://mc.us16.list-manage.com/subscribe/post?u=ce1b58add8c1efd13b6b9c915&id=b9fe5c7621';
 const LIST = 'b9fe5c7621';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const clean = s => String(s || '').replace(/<[^>]+>/g, '').replace(/^\d+ - /, '').trim();
