@@ -1298,7 +1298,7 @@ dispatchEvent(new Event('three-ready'));
       float sweep = fract(vUv.x * 0.7 - uTime * 0.08);
       lit += base * 0.3 * (1.0 - smoothstep(0.0, 0.12, abs(sweep - 0.5)));
       float d = length((px - uMouse * uRes) / uRes.y);
-      lit += uHover * (1.0 - smoothstep(0.0, 0.6, d)) * 0.55 * mix(vec3(1.0, 0.18, 0.58), vec3(0.18, 0.52, 1.0), h1);
+      lit += uHover * (1.0 - smoothstep(0.0, 0.28, d)) * 0.55 * mix(vec3(1.0, 0.18, 0.58), vec3(0.18, 0.52, 1.0), h1);
       float tw = step(0.99, hash(cell + floor(uTime * 4.0)));
       vec2 q = abs(f - 0.5);
       lit += tw * (1.0 - smoothstep(0.0, 0.08, q.x * q.y * 6.0)) * 1.5;
@@ -1383,7 +1383,7 @@ dispatchEvent(new Event('three-ready'));
 
     // the pointer paints into a small trail map; the shader flips tiles wherever it's bright
     const stamp = (u, v) => {
-      const x = u * TW, y = (1 - v) * TH, r = TH * 1.25;
+      const x = u * TW, y = (1 - v) * TH, r = TH * .55;
       const g = tx.createRadialGradient(x, y, 0, x, y, r);
       g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.6, 'rgba(255,255,255,.6)'); g.addColorStop(1, 'rgba(255,255,255,0)');
       tx.fillStyle = g; tx.fillRect(x - r, y - r, r * 2, r * 2);
