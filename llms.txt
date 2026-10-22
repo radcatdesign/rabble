@@ -1,0 +1,33 @@
+# Rabble & Rouse with Katie Martell
+
+> Rabble & Rouse with Katie Martell is a late-night talk show and video podcast, filmed live in front of a studio audience at Triad Studios. The show shines a spotlight on ordinary people with extraordinary lived experiences. Late night… for real life. Hosted by Katie Martell. Available as video and audio on YouTube, Spotify, Apple Podcasts and Amazon Music.
+
+Key facts:
+- Format: late-night talk show and video podcast, filmed live in front of a studio audience
+- Host: Katie Martell (Katie Martell is a professional rabble-rouser and unapologetic truth-teller. With Rabble & Rouse, she shines a spotlight on extraordinary lived experiences.)
+- Filmed at: Triad Studios
+- Season: one (in progress)
+- Contact: hello@rabbleandrouse.com
+
+## Episodes
+
+- [Episode 01: Cheryl Katon](https://rabble-rouse.vercel.app/episode-1.html): Katie sits down with the bravest woman we know to discuss growing up trans, living authentically, and the cost of visibility.
+- [Episode 02: Mistress Eustacia](https://rabble-rouse.vercel.app/episode-2.html): Katie sits down with a professional dominatrix to explore power exchange, setting better boundaries, and what it really means to give up control. (coming soon)
+
+## Watch or listen
+
+- [YouTube](https://www.youtube.com/@RabbleandRouse)
+- [Spotify](https://creators.spotify.com/pod/profile/rabble-and-rouse1/)
+- [Apple Podcasts](https://podcasts.apple.com/us/podcast/rabble-rouse-with-katie-martell/id6816761938)
+- [Amazon Music](https://music.amazon.com/podcasts/0fa41c51-29e2-4d1f-9343-2f73c4af3576/rabble-rouse-with-katie-martell)
+
+## Site
+
+- [Home](https://rabble-rouse.vercel.app/): about the show, latest episodes, where to watch, the host, free stickers and the newsletter
+- [Merch](https://rabble-rouse.vercel.app/store.html): official apparel, drinkware, stickers, prints and accessories, made to order
+- [Full text for LLMs](https://rabble-rouse.vercel.app/llms-full.txt): every episode description and the show credits in one file
+
+## Optional
+
+- [Katie Martell](https://www.katie-martell.com): the host's own site
+- [Instagram](https://www.instagram.com/RabbleAndRouseShow), [TikTok](https://www.tiktok.com/@RabbleandRouse), [Facebook](https://www.facebook.com/rabbleandrouse/)

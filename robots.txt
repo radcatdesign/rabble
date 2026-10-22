@@ -1,0 +1,22 @@
+# Search engines and AI assistants are welcome. See /llms.txt for a plain-text guide to the show.
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /server/
+Disallow: /functions/
+
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: CCBot
+Allow: /
+Disallow: /api/
+
+Sitemap: https://rabble-rouse.vercel.app/sitemap.xml
