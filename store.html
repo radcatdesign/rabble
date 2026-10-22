@@ -479,6 +479,21 @@ main{position:relative;z-index:1}
 .yt-link svg[aria-hidden]{flex:none}
 
 /* free sticker */
+.merch-row{position:relative;padding-block:clamp(90px,11vw,160px) 0}
+.merch-row .eps-ctrl .btn{margin-left:6px}
+.mr-viewport{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;overscroll-behavior-x:contain;
+  padding-left:max(var(--gutter),calc((100% - 1440px) / 2 + var(--gutter)));scroll-padding-left:max(var(--gutter),calc((100% - 1440px) / 2 + var(--gutter)))}
+.mr-viewport::-webkit-scrollbar{display:none}
+.mr-track{display:flex;gap:clamp(14px,1.6vw,24px);width:max-content;padding:4px var(--gutter) 6px 0}
+.mr-card{flex:none;width:clamp(230px,21vw,320px);scroll-snap-align:start;display:grid;gap:14px;color:inherit}
+.mr-img{position:relative;aspect-ratio:1;border-radius:20px;overflow:hidden;background:#fff;border:1px solid var(--line);transition:border-color .4s,box-shadow .4s,transform .6s var(--ease)}
+.mr-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1s var(--ease)}
+.mr-card:hover .mr-img{border-color:color-mix(in srgb,var(--magenta) 55%,transparent);box-shadow:0 26px 60px -32px color-mix(in srgb,var(--magenta) 70%,transparent);transform:translateY(-4px)}
+.mr-card:hover .mr-img img{transform:scale(1.05)}
+.mr-meta{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.mr-name{font:800 clamp(1.25rem,1.6vw,1.6rem)/1.05 var(--f-display);text-transform:uppercase}
+.mr-price{font:500 13px/1 var(--f-mono);letter-spacing:.06em;color:var(--magenta-soft);white-space:nowrap}
+@media (max-width:760px){.merch-row .eps-ctrl .eps-arrow{display:none}.mr-card{width:68vw}}
 .sticker{position:relative;padding-block:clamp(70px,9vw,140px) 0}
 .sticker-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:clamp(32px,5vw,80px)}
 .sticker-media{position:relative;display:block;aspect-ratio:1;max-height:640px;width:100%;padding:0;border:0;border-radius:24px;overflow:hidden;background:var(--ink-2);
@@ -576,6 +591,7 @@ main{position:relative;z-index:1}
 @media (max-width:560px){.grid{grid-template-columns:1fr;grid-auto-rows:auto}}
 .prod{display:grid;grid-template-rows:auto 1fr;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:color-mix(in srgb,var(--ink-2) 82%,transparent);
   transition:border-color .4s,box-shadow .6s var(--ease),transform .6s var(--ease)}
+.prod.is-spot{border-color:var(--magenta);box-shadow:0 0 0 3px color-mix(in srgb,var(--magenta) 35%,transparent),0 30px 70px -30px color-mix(in srgb,var(--magenta) 80%,transparent)}
 .prod:hover{border-color:color-mix(in srgb,var(--magenta) 55%,transparent);box-shadow:0 30px 70px -36px color-mix(in srgb,var(--magenta) 70%,transparent);transform:translateY(-4px)}
 .prod-img{position:relative;aspect-ratio:1;background:#fff;overflow:hidden}
 .prod-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;transition:transform 1s var(--ease)}
@@ -1607,6 +1623,53 @@ dispatchEvent(new Event('three-ready'));
     reveal();
   }
 
+  /* ---------- home merch carousel: products from the store, each one opens on the Merch page ---------- */
+  (() => {
+    const sec = $('#merch');
+    if (!sec) return;
+    const vp = $('.mr-viewport', sec), track = $('.mr-track', sec);
+    const prevB = $('.eps-arrow[data-dir="-1"]', sec), nextB = $('.eps-arrow[data-dir="1"]', sec);
+    const money = (c, cur) => new Intl.NumberFormat('en-US', { style: 'currency', currency: (cur || 'usd').toUpperCase(), minimumFractionDigits: c % 100 ? 2 : 0 }).format(c / 100);
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const short = n => n.replace(/^Rabble\s*(&|and)\s*Rouse\s*/i, '').replace(/^[-:|]\s*/, '') || n;
+    let shown = '';
+    const draw = products => {
+      const list = (products || []).filter(p => p.variants && p.variants.length).slice(0, 12);
+      const key = JSON.stringify(list.map(p => [p.id, p.image]));
+      if (!list.length || key === shown) return;
+      shown = key;
+      track.innerHTML = list.map((p, i) => {
+        const low = p.variants.reduce((a, v) => v.price < a.price ? v : a, p.variants[0]);
+        const img = p.image || (p.variants.find(v => v.image) || {}).image || '';
+        return `<a class="mr-card" role="listitem" href="store.html#p-${p.id}">
+          <span class="mr-img"><img src="${esc(img)}" alt="${esc(p.name)}" loading="${i < 4 ? 'eager' : 'lazy'}" decoding="async"></span>
+          <span class="mr-meta"><span class="mr-name">${esc(short(p.name))}</span><span class="mr-price">From ${money(low.price, low.currency)}</span></span>
+        </a>`;
+      }).join('');
+      sec.hidden = false;
+      edges();
+      if (window.ScrollTrigger) ScrollTrigger.refresh();
+    };
+    const edges = () => {
+      prevB.disabled = vp.scrollLeft < 4;
+      nextB.disabled = vp.scrollLeft + vp.clientWidth >= vp.scrollWidth - 4;
+    };
+    vp.addEventListener('scroll', edges, { passive: true });
+    addEventListener('resize', edges);
+    [prevB, nextB].forEach(b => b.addEventListener('click', () => {
+      const card = $('.mr-card', track);
+      const step = card ? card.offsetWidth + parseFloat(getComputedStyle(track).columnGap || 20) : 300;
+      vp.scrollBy({ left: +b.dataset.dir * step * Math.max(1, Math.floor((vp.clientWidth - 80) / step)), behavior: reduce ? 'auto' : 'smooth' });
+    }));
+    // same catalog cache as the Merch page, then a fresh copy
+    try { const c = JSON.parse(localStorage.getItem('rr-catalog-v1') || 'null'); if (c && c.products) draw(c.products); } catch (_) {}
+    fetch(`${SITE_API}/products`, { headers: { accept: 'application/json' } }).then(r => r.json()).then(d => {
+      if (!d || !d.products || !d.products.length) return;
+      try { localStorage.setItem('rr-catalog-v1', JSON.stringify({ at: Date.now(), products: d.products })); } catch (_) {}
+      draw(d.products);
+    }).catch(() => {});
+  })();
+
   /* ---------- everything below needs GSAP ---------- */
   if (!hasGsap) return;
   gsap.registerPlugin(ScrollTrigger);
@@ -1620,6 +1683,7 @@ dispatchEvent(new Event('three-ready'));
   /* smooth scroll */
   if (window.Lenis) {
     lenis = new Lenis({ lerp: .085, smoothWheel: true, wheelMultiplier: .95 });
+    window.rrLenis = lenis;
     lenis.on('scroll', ScrollTrigger.update);
     gsap.ticker.add(t => lenis.raf(t * 1000));
     gsap.ticker.lagSmoothing(0);
@@ -1999,7 +2063,7 @@ dispatchEvent(new Event('three-ready'));
     const colors = [...new Set(vs.map(v => v.color).filter(Boolean))];
     const sizes = [...new Set(vs.map(v => v.size).filter(Boolean))];
     const el = document.createElement('article');
-    el.className = 'prod';
+    el.className = 'prod'; el.id = 'p-' + p.id;
     el.innerHTML = `
       <div class="prod-img"><img alt="${esc(p.name)}" loading="lazy" decoding="async"></div>
       <div class="prod-body">
@@ -2113,8 +2177,21 @@ dispatchEvent(new Event('three-ready'));
       items.forEach(it => grid.append(it.el));
       shop(items);
       if (window.ScrollTrigger) ScrollTrigger.refresh();
+      spotlight();
     }
   };
+  // arriving from a product on the home page: bring that card into view and give it a glow
+  let spotted = false;
+  function spotlight() {
+    const el = !spotted && /^#p-\d+$/.test(location.hash) && document.getElementById(location.hash.slice(1));
+    if (!el || el.hidden) return;
+    spotted = true;
+    setTimeout(() => {
+      const y = el.getBoundingClientRect().top + scrollY - Math.max(90, (innerHeight - el.offsetHeight) / 2);
+      if (window.rrLenis) window.rrLenis.scrollTo(y, { duration: 1.4 }); else scrollTo({ top: y, behavior: 'smooth' });
+      el.classList.add('is-spot'); setTimeout(() => el.classList.remove('is-spot'), 2600);
+    }, 900);
+  }
   if (cached) show(cached);
   const fresh = (tries = 0) => load().then(d => {
     try { localStorage.setItem(CACHE, JSON.stringify({ at: Date.now(), products: d.products })); } catch (_) {}

@@ -478,6 +478,21 @@ main{position:relative;z-index:1}
 .yt-link svg[aria-hidden]{flex:none}
 
 /* free sticker */
+.merch-row{position:relative;padding-block:clamp(90px,11vw,160px) 0}
+.merch-row .eps-ctrl .btn{margin-left:6px}
+.mr-viewport{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;overscroll-behavior-x:contain;
+  padding-left:max(var(--gutter),calc((100% - 1440px) / 2 + var(--gutter)));scroll-padding-left:max(var(--gutter),calc((100% - 1440px) / 2 + var(--gutter)))}
+.mr-viewport::-webkit-scrollbar{display:none}
+.mr-track{display:flex;gap:clamp(14px,1.6vw,24px);width:max-content;padding:4px var(--gutter) 6px 0}
+.mr-card{flex:none;width:clamp(230px,21vw,320px);scroll-snap-align:start;display:grid;gap:14px;color:inherit}
+.mr-img{position:relative;aspect-ratio:1;border-radius:20px;overflow:hidden;background:#fff;border:1px solid var(--line);transition:border-color .4s,box-shadow .4s,transform .6s var(--ease)}
+.mr-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1s var(--ease)}
+.mr-card:hover .mr-img{border-color:color-mix(in srgb,var(--magenta) 55%,transparent);box-shadow:0 26px 60px -32px color-mix(in srgb,var(--magenta) 70%,transparent);transform:translateY(-4px)}
+.mr-card:hover .mr-img img{transform:scale(1.05)}
+.mr-meta{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.mr-name{font:800 clamp(1.25rem,1.6vw,1.6rem)/1.05 var(--f-display);text-transform:uppercase}
+.mr-price{font:500 13px/1 var(--f-mono);letter-spacing:.06em;color:var(--magenta-soft);white-space:nowrap}
+@media (max-width:760px){.merch-row .eps-ctrl .eps-arrow{display:none}.mr-card{width:68vw}}
 .sticker{position:relative;padding-block:clamp(70px,9vw,140px) 0}
 .sticker-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:clamp(32px,5vw,80px)}
 .sticker-media{position:relative;display:block;aspect-ratio:1;max-height:640px;width:100%;padding:0;border:0;border-radius:24px;overflow:hidden;background:var(--ink-2);
@@ -775,6 +790,23 @@ main{position:relative;z-index:1}
         <p>Put the rabble on your laptop, your water bottle, your bumper. Email us and we'll send one your way.</p>
         <a class="btn btn-primary magnetic" href="mailto:hello@rabbleandrouse.com?subject=FREE%20sticker&amp;body=Hi%20Rabble%20%26%20Rouse%21%0A%0AI%27d%20love%20a%20free%20sticker.%20Here%27s%20where%20to%20send%20it%3A%0A%0AName%3A%0AStreet%20address%3A%0AApt%20%2F%20unit%3A%0ACity%2C%20State%2C%20ZIP%3A%0ACountry%3A%0A%0AThanks%21"><svg aria-hidden="true"><use href="#mail"/></svg>Get a free sticker</a>
       </div>
+    </div>
+  </section>
+
+  <section class="merch-row" id="merch" aria-labelledby="merch-title" hidden>
+    <div class="wrap eps-head">
+      <div>
+        <p class="label"><svg aria-hidden="true"><use href="#spark"/></svg>Official merch</p>
+        <h2 class="sec-title" id="merch-title">Wear the <span class="grad-text">rabble</span></h2>
+      </div>
+      <div class="eps-ctrl">
+        <button class="eps-arrow" type="button" data-dir="-1" aria-label="Previous products"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+        <button class="eps-arrow" type="button" data-dir="1" aria-label="More products"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <a class="btn btn-ghost magnetic" href="store.html">Shop all merch</a>
+      </div>
+    </div>
+    <div class="mr-viewport" aria-roledescription="carousel" aria-label="Merch">
+      <div class="mr-track" role="list"></div>
     </div>
   </section>
 
@@ -1482,6 +1514,53 @@ dispatchEvent(new Event('three-ready'));
     reveal();
   }
 
+  /* ---------- home merch carousel: products from the store, each one opens on the Merch page ---------- */
+  (() => {
+    const sec = $('#merch');
+    if (!sec) return;
+    const vp = $('.mr-viewport', sec), track = $('.mr-track', sec);
+    const prevB = $('.eps-arrow[data-dir="-1"]', sec), nextB = $('.eps-arrow[data-dir="1"]', sec);
+    const money = (c, cur) => new Intl.NumberFormat('en-US', { style: 'currency', currency: (cur || 'usd').toUpperCase(), minimumFractionDigits: c % 100 ? 2 : 0 }).format(c / 100);
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    const short = n => n.replace(/^Rabble\s*(&|and)\s*Rouse\s*/i, '').replace(/^[-:|]\s*/, '') || n;
+    let shown = '';
+    const draw = products => {
+      const list = (products || []).filter(p => p.variants && p.variants.length).slice(0, 12);
+      const key = JSON.stringify(list.map(p => [p.id, p.image]));
+      if (!list.length || key === shown) return;
+      shown = key;
+      track.innerHTML = list.map((p, i) => {
+        const low = p.variants.reduce((a, v) => v.price < a.price ? v : a, p.variants[0]);
+        const img = p.image || (p.variants.find(v => v.image) || {}).image || '';
+        return `<a class="mr-card" role="listitem" href="store.html#p-${p.id}">
+          <span class="mr-img"><img src="${esc(img)}" alt="${esc(p.name)}" loading="${i < 4 ? 'eager' : 'lazy'}" decoding="async"></span>
+          <span class="mr-meta"><span class="mr-name">${esc(short(p.name))}</span><span class="mr-price">From ${money(low.price, low.currency)}</span></span>
+        </a>`;
+      }).join('');
+      sec.hidden = false;
+      edges();
+      if (window.ScrollTrigger) ScrollTrigger.refresh();
+    };
+    const edges = () => {
+      prevB.disabled = vp.scrollLeft < 4;
+      nextB.disabled = vp.scrollLeft + vp.clientWidth >= vp.scrollWidth - 4;
+    };
+    vp.addEventListener('scroll', edges, { passive: true });
+    addEventListener('resize', edges);
+    [prevB, nextB].forEach(b => b.addEventListener('click', () => {
+      const card = $('.mr-card', track);
+      const step = card ? card.offsetWidth + parseFloat(getComputedStyle(track).columnGap || 20) : 300;
+      vp.scrollBy({ left: +b.dataset.dir * step * Math.max(1, Math.floor((vp.clientWidth - 80) / step)), behavior: reduce ? 'auto' : 'smooth' });
+    }));
+    // same catalog cache as the Merch page, then a fresh copy
+    try { const c = JSON.parse(localStorage.getItem('rr-catalog-v1') || 'null'); if (c && c.products) draw(c.products); } catch (_) {}
+    fetch(`${SITE_API}/products`, { headers: { accept: 'application/json' } }).then(r => r.json()).then(d => {
+      if (!d || !d.products || !d.products.length) return;
+      try { localStorage.setItem('rr-catalog-v1', JSON.stringify({ at: Date.now(), products: d.products })); } catch (_) {}
+      draw(d.products);
+    }).catch(() => {});
+  })();
+
   /* ---------- everything below needs GSAP ---------- */
   if (!hasGsap) return;
   gsap.registerPlugin(ScrollTrigger);
@@ -1495,6 +1574,7 @@ dispatchEvent(new Event('three-ready'));
   /* smooth scroll */
   if (window.Lenis) {
     lenis = new Lenis({ lerp: .085, smoothWheel: true, wheelMultiplier: .95 });
+    window.rrLenis = lenis;
     lenis.on('scroll', ScrollTrigger.update);
     gsap.ticker.add(t => lenis.raf(t * 1000));
     gsap.ticker.lagSmoothing(0);
