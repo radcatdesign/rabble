@@ -124,6 +124,14 @@ html.rr-snap::after{display:none}
 .rr-cloth.is-live{opacity:1!important}
 .rr-cloth.is-on{pointer-events:auto}
 
+/* scroll reveals: text, UI and images ease in as they arrive (animations, so hover transitions stay untouched) */
+.rv{opacity:0}
+.rv.rv-in{animation:rvUp 1s var(--ease) var(--rv-d,0s) both}
+img.rv.rv-in,video.rv.rv-in,iframe.rv.rv-in{animation:rvImg 1.4s var(--ease) var(--rv-d,0s) both}
+@keyframes rvUp{from{opacity:0;translate:0 34px}to{opacity:1;translate:0 0}}
+@keyframes rvImg{from{opacity:0;scale:1.08;filter:blur(8px)}to{opacity:1;scale:1;filter:blur(0)}}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1}.rv.rv-in{animation:none}}
+
 /* loader: velvet stage curtains that part once the page is ready */
 .intro{position:fixed;inset:0;z-index:200;background:#080711;display:grid;place-items:center;overflow:hidden;animation:introGone 0s linear 12.5s forwards}
 .curtain{position:absolute;top:0;bottom:0;width:51%;will-change:transform;
@@ -480,7 +488,7 @@ main{position:relative;z-index:1}
 /* free sticker */
 .merch-row{position:relative;padding-block:clamp(90px,11vw,160px) 0}
 .merch-row .eps-ctrl .btn{margin-left:6px}
-.mr-viewport{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;overscroll-behavior-x:contain;
+.mr-viewport{overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain;
   padding-left:max(var(--gutter),calc((100% - 1440px) / 2 + var(--gutter)));scroll-padding-left:max(var(--gutter),calc((100% - 1440px) / 2 + var(--gutter)))}
 .mr-viewport::-webkit-scrollbar{display:none}
 .mr-track{display:flex;gap:clamp(14px,1.6vw,24px);width:max-content;padding:4px var(--gutter) 6px 0}
@@ -1550,7 +1558,11 @@ dispatchEvent(new Event('three-ready'));
     [prevB, nextB].forEach(b => b.addEventListener('click', () => {
       const card = $('.mr-card', track);
       const step = card ? card.offsetWidth + parseFloat(getComputedStyle(track).columnGap || 20) : 300;
-      vp.scrollBy({ left: +b.dataset.dir * step * Math.max(1, Math.floor((vp.clientWidth - 80) / step)), behavior: reduce ? 'auto' : 'smooth' });
+      const max = vp.scrollWidth - vp.clientWidth;
+      const to = Math.max(0, Math.min(max, Math.round((vp.scrollLeft + +b.dataset.dir * step * Math.max(1, Math.floor((vp.clientWidth - 80) / step))) / step) * step));
+      if (reduce || !window.gsap) { vp.scrollLeft = to; return; }
+      vp.style.scrollSnapType = 'none';
+      gsap.to(vp, { scrollLeft: to, duration: .9, ease: 'expo.out', overwrite: true, onComplete: () => { vp.style.scrollSnapType = ''; } });
     }));
     // same catalog cache as the Merch page, then a fresh copy
     try { const c = JSON.parse(localStorage.getItem('rr-catalog-v1') || 'null'); if (c && c.products) draw(c.products); } catch (_) {}
@@ -1740,6 +1752,40 @@ dispatchEvent(new Event('three-ready'));
   $$('[data-reveal]').forEach(el => {
     gsap.from(el, { y: 60, opacity: .15, duration: 1.4, ease: 'expo.out', scrollTrigger: { trigger: el, start: 'top 90%', once: true } });
   });
+
+  /* everything else: text, buttons, cards and images rise in as they scroll into view, a beat apart */
+  (() => {
+    const SEL = 'h2,h3,h4,p,li,dt,dd,blockquote,.label,.btn,.eps-arrow,.plat,.mr-card,.prod,.credit,.soc,.chip,.shop-bar,.foot-row > *,img,video,iframe,figure';
+    const SKIP = '.hero,.shop-hero,.intro,.topbar,.menu,.player,.drawer,.dock,.cursor,[data-reveal],[data-lit],.join-card,.eps-viewport,.stills,.watch-frame,.disco-wrap,.marquee-wrap,.host-figure,.host-name,[aria-hidden="true"]';
+    const scopes = $$('main, .foot');
+    const io = new IntersectionObserver(entries => {
+      const hits = entries.filter(en => en.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top || a.boundingClientRect.left - b.boundingClientRect.left);
+      hits.forEach((en, i) => {
+        const el = en.target; io.unobserve(el);
+        el.style.setProperty('--rv-d', Math.min(i, 7) * .07 + 's');
+        el.classList.add('rv-in');
+        el.addEventListener('animationend', () => { el.classList.remove('rv', 'rv-in'); el.style.removeProperty('--rv-d'); }, { once: true });
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: .01 });
+    const take = root => {
+      const list = [];
+      (root.matches && root.matches(SEL) ? [root] : []).concat([...root.querySelectorAll(SEL)]).forEach(el => {
+        if (el.dataset.rv || el.closest(SKIP)) return;
+        // the outermost match moves as one piece (a card, not its parts)
+        const up = el.parentElement && el.parentElement.closest(SEL);
+        if (up && scopes.some(sc => sc.contains(up)) && !up.closest(SKIP)) return;
+        if (getComputedStyle(el).animationName !== 'none') return;
+        el.dataset.rv = '1'; el.classList.add('rv'); list.push(el);
+      });
+      list.forEach(el => io.observe(el));
+    };
+    // start once the stage is open, so nothing plays out behind the curtains
+    (window.rrStage || Promise.resolve()).then(() => {
+      scopes.forEach(take);
+      const mo = new MutationObserver(muts => muts.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1 && scopes.some(sc => sc.contains(n))) take(n); })));
+      scopes.forEach(sc => mo.observe(sc, { childList: true, subtree: true }));
+    });
+  })();
 
   /* signup card: the border traces itself, then the photo and content arrive */
   (() => {
