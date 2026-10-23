@@ -147,7 +147,7 @@ export function hangBall({ canvas, spots = null, place, drop = Promise.resolve()
     const F = Math.max(sw, sh) * .55;
     sctx.globalCompositeOperation = 'lighter';
     for (const b of beams) {
-      const a = b.lon + rot * 2, cl = Math.cos(b.lat);
+      const a = b.lon - rot * 2, cl = Math.cos(b.lat);   // sweeps the same way the ball turns
       const dx = cl * Math.sin(a), dy = Math.sin(b.lat), dz = cl * Math.cos(a);
       if (dz < .12) continue;
       const x = bx + dx / dz * F, y = by - dy / dz * F + F * .08;
