@@ -16,7 +16,7 @@ let query = null, ready = null;
 export function useQuery(fn) { query = fn; ready = null; }   // tests plug in a local Postgres
 async function db(env) {
   if (!query) {
-    const url = env.DATABASE_URL || env.POSTGRES_URL || env.DATABASE_URL_UNPOOLED;
+    const url = dbUrl(env);
     if (!url) return null;
     const { neon } = await import('@neondatabase/serverless');
     const sql = neon(url);
@@ -57,6 +57,9 @@ const SCHEMA = [
   `create table if not exists analytics_people (browser_id text primary key, email text not null, linked_at timestamptz not null default now())`,
   `create table if not exists analytics_counters (day date not null, name text not null, count integer not null default 0, primary key (day, name))`
 ];
+// Neon through Vercel can add a prefix (STORAGE_DATABASE_URL, NEON_POSTGRES_URL...), so look for any of them
+export const dbUrl = env => env.DATABASE_URL || env.POSTGRES_URL || env.DATABASE_URL_UNPOOLED ||
+  Object.keys(env).filter(k => /(^|_)(DATABASE_URL|POSTGRES_URL)$/.test(k)).sort().map(k => env[k]).find(v => /^postgres(ql)?:\/\//.test(v || '')) || '';
 async function migrate() { for (const s of SCHEMA) await query(s); }
 export const ensure = env => db(env);
 
@@ -566,7 +569,7 @@ export async function handle(req, env) {
     if (op === 'logout') return json({ ok: true }, 200, { 'set-cookie': `${COOKIE}=; Path=/api/analytics; HttpOnly; Secure; SameSite=Strict; Max-Age=0` });
 
     // everything below is staff only
-    if (op === 'me') return json({ staff: isStaff(req, env), configured: !!env.ANALYTICS_PASSWORD, database: !!(env.DATABASE_URL || env.POSTGRES_URL || query) });
+    if (op === 'me') return json({ staff: isStaff(req, env), configured: !!env.ANALYTICS_PASSWORD, database: !!(dbUrl(env) || query) });
     if (!isStaff(req, env)) return json({ error: 'Sign in first.' }, 401);
     if (req.method === 'POST' && req.headers.get('x-rr-staff') !== '1') return json({ error: 'Bad request.' }, 400);
     const q = await db(env);
