@@ -80,6 +80,16 @@ The first value is the action name (it groups the action in the dashboard), the 
 
 Vercel's serverless functions can't run a headless browser cheaply, so the heatmap viewer loads the live page in a frame at 1440, 820 or 390 px wide (`?rr-heatmap=1` turns off the curtains, animations and tracking inside the frame) and paints the heat over it. The `analytics_shots` table is there in case stored screenshots are added later.
 
+## Subscribers
+
+Every newsletter signup on the site is saved in our own `subscribers` table (same Neon database), and also sent to Mailchimp, which still sends the emails.
+
+- One row per email, with the signup form it came from, the page, approximate location, when they joined, how many times they signed up, and the Mailchimp result.
+- If Mailchimp is down or slow, the signup is still saved and the visitor still gets a thank-you. The dashboard shows them as **Not sent yet** with **Retry** (one person) and **Retry all**.
+- **Import from Mailchimp** pulls in everyone already on the Mailchimp list (needs `MAILCHIMP_API_KEY`). People already in the table keep their original source.
+- **Download CSV** exports the whole list. **Remove** deletes one person from our table only; it doesn't unsubscribe them in Mailchimp.
+- Unsubscribes happen in Mailchimp. Run the import again to bring their status across.
+
 ## Database tables
 
-`analytics_events`, `analytics_presence`, `analytics_heat`, `analytics_daily`, `analytics_salts`, `analytics_settings`, `analytics_shots`, `analytics_people` (browser ID to email, set when someone signs up for the newsletter from a browser with an ID) and `analytics_counters` (filter counts). Schema: top of `server/analytics.js`.
+`analytics_events`, `analytics_presence`, `analytics_heat`, `analytics_daily`, `analytics_salts`, `analytics_settings`, `analytics_shots`, `analytics_people` (browser ID to email, set when someone signs up for the newsletter from a browser with an ID), `analytics_counters` (filter counts) and `subscribers` (the newsletter list). Schema: top of `server/analytics.js`.

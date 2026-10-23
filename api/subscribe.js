@@ -1,13 +1,25 @@
 import { json, cors } from '../server/store.js';
 import { subscribe } from '../server/newsletter.js';
-import { linkEmail } from '../server/analytics.js';
+import { linkEmail, recordSignup } from '../server/analytics.js';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/* Newsletter signups go to Mailchimp and into our own subscribers table. If Mailchimp is down but the
+   signup is saved, the visitor still gets a thank-you; the dashboard shows them as "Not sent yet" with a retry. */
 export async function POST(request) {
-  const h = cors(request, process.env);
+  const h = cors(request, process.env), env = process.env;
   try {
     const body = await request.json().catch(() => ({}));
-    const out = await subscribe(process.env, body.email, body.source);
-    await linkEmail(process.env, request, body.bid, body.email);   // shows this browser by email in the analytics dashboard
+    const email = String(body.email || '').trim().toLowerCase();
+    if (!EMAIL_RE.test(email) || email.length > 254) return json({ error: 'That email address looks off. Check it and try again.' }, 400, h);
+    let out = null, mcErr = null;
+    try { out = await subscribe(env, email, body.source); }
+    catch (err) { if (err.status && err.status < 500 && err.status !== 429) throw err; mcErr = err; }
+    const status = out ? (String(env.MAILCHIMP_DOUBLE_OPTIN) === 'true' && out.status === 'new' ? 'pending' : 'subscribed') : 'not_sent';
+    const saved = await recordSignup(env, request, { email, source: body.source, browserId: body.bid, status,
+      mailchimp: out ? `${out.status} via ${out.via}` : 'failed: ' + String(mcErr && mcErr.message).slice(0, 160) });
+    if (out) await linkEmail(env, request, body.bid, email);   // shows this browser by email in the analytics dashboard
+    if (mcErr) { if (saved) return json({ status: 'new', via: 'saved' }, 200, h); throw mcErr; }
     return json(out, 200, h);
   } catch (err) {
     return json({ error: err.status && err.status < 500 ? err.message : 'Signups hit a snag. Try again in a minute.' }, err.status || 500, h);

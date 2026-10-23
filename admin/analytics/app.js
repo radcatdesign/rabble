@@ -9,7 +9,7 @@
   };
   const state = { range: LS.get('rr-a-range') || '7d', from: LS.get('rr-a-from') || '', to: LS.get('rr-a-to') || '', sample: LS.get('rr-a-sample') === '1', me: null, timers: [] };
   const RANGES = [['24h', 'Last 24 hours'], ['7d', 'Last 7 days'], ['30d', 'Last 30 days'], ['90d', 'Last 90 days'], ['12m', 'Last 12 months'], ['custom', 'Custom dates']];
-  const NAV = [['overview', 'Overview'], ['live', 'Live'], ['pages', 'Pages'], ['heatmaps', 'Heatmaps'], ['audience', 'Audience'], ['visitors', 'Visitors'], ['actions', 'Actions'], ['settings', 'Settings']];
+  const NAV = [['overview', 'Overview'], ['live', 'Live'], ['pages', 'Pages'], ['heatmaps', 'Heatmaps'], ['audience', 'Audience'], ['visitors', 'Visitors'], ['actions', 'Actions'], ['subscribers', 'Subscribers'], ['settings', 'Settings']];
 
   /* ---------- formatting ---------- */
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -60,6 +60,10 @@
     heat: 'Clicks and cursor movement are grouped into a grid of 40 columns and 20 px rows per page, device and day. Cursor movement is sampled at most every 100 ms and only on desktop. Nothing typed is ever recorded.',
     scrollmap: 'The share of page views that reached each depth of the page. Depth counts the bottom of the screen, so the first screenful is always 100%.',
     bench: 'Your numbers against published figures for similar sites. A number is only rated when the range has at least 30 visits.',
+    subsTotal: 'Everyone who has signed up for the newsletter on this site, all time. One row per email; signing up again counts once.',
+    subsNew: 'New emails that signed up in this range, compared with the same stretch just before.',
+    subsNotSent: 'Signups we saved but Mailchimp didn’t accept when they came in (usually Mailchimp having a bad moment). Retry sends them again.',
+    subsPending: 'Waiting for the person to click the confirm link in their email. Only happens with double opt-in turned on in Mailchimp.',
     filtered: 'Requests the filters dropped in the last 30 days. Known bots by browser signature, requests that showed no sign of JavaScript, likely bots (visits with no activity at all), and traffic from excluded IPs.'
   };
   const tip = k => TIPS[k] ? `<button class="tip" type="button" data-tip="${k}" aria-label="How this is measured">?</button>` : '';
@@ -539,6 +543,58 @@
     if (same) draw(); else frame.addEventListener('load', hook, { once: true });
   }
 
+  Views.subscribers = async (view, _, alive) => {
+    let d = await api('subscribers'); if (!alive()) return;
+    const STATUS = { subscribed: ['Subscribed', 'ok'], pending: ['Confirming', 'mid'], not_sent: ['Not sent yet', 'low'], unsubscribed: ['Unsubscribed', ''], cleaned: ['Bounced', ''] };
+    let rows = d.rows.slice(), page = 0, act = null;
+    if (!view.__subs) view.__subs = true, view.addEventListener('click', e => {
+      const r = e.target.closest('[data-retry]'), x = e.target.closest('[data-del]'), act = view.__act;
+      if (r && act) act({ retry: r.dataset.retry }, 'Sending to Mailchimp…');
+      if (x && act && confirm(`Remove ${x.dataset.del} from this list? This doesn't unsubscribe them in Mailchimp.`)) act({ delete: x.dataset.del }, 'Removing…');
+    });
+    const draw = () => {
+      view.innerHTML = head('Subscribers', `The <span class="grad-text">list</span>`, `Everyone who signed up for the newsletter on the site. Mailchimp sends the emails; this copy is yours. ${rangeLabel()}.`) + `
+        <div class="kpis">
+          <section class="card kpi"><span class="k">Subscribers${tip('subsTotal')}</span><span class="v">${num(d.total)}</span><span class="s">all time</span></section>
+          <section class="card kpi"><span class="k">New${tip('subsNew')}</span><span class="v">${num(d.now)}</span><span class="s">${delta(d.now, d.prev)}</span></section>
+          <section class="card kpi"><span class="k">Not sent yet${tip('subsNotSent')}</span><span class="v">${num(d.notSent)}</span><span class="s">${d.notSent ? '<button class="btn btn-ghost btn-sm" type="button" id="retryAll">Retry all</button>' : 'All in Mailchimp'}</span></section>
+          <section class="card kpi"><span class="k">Confirming${tip('subsPending')}</span><span class="v">${num(d.pending)}</span></section>
+        </div>
+        <div class="grid" style="margin-top:clamp(12px,1.4vw,18px)">
+          ${card('Signups', lineChart(d.series, [{ k: 'signups', label: 'Signups', color: 'url(#strokeA)', swatch: 'var(--grad)' }], d.hourly))}
+          <div class="grid g2">${card('Signed up from', bars(d.sources))}${card('On page', bars(d.pages, { label: r => esc(pageName(r.k)) }))}</div>
+          <section class="card"><h3>Everyone<span class="grow"></span>
+            <button class="btn btn-ghost btn-sm" type="button" id="subImport">Import from Mailchimp</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="subCsv">Download CSV</button></h3>
+            <p class="form-note" id="subNote" role="status"></p><div id="subTable"></div>
+            ${rows.length >= (page + 1) * 100 ? '<div class="row" style="margin-top:12px"><button class="btn btn-ghost btn-sm" type="button" id="subMore">Load more</button></div>' : ''}</section>
+        </div>`;
+      wireChart(view, d.series, [{ k: 'signups', label: 'Signups' }], d.hourly);
+      table($('#subTable'), [
+        { k: 'email', label: 'Email', html: r => r.browser_id ? `<a href="#/visitor/${esc(r.browser_id)}">${esc(r.email)}</a>` : esc(r.email), cls: 'wrap-cell' },
+        { k: 'created_at', label: 'Joined', fmt: when, sortv: r => +new Date(r.created_at) },
+        { k: 'source', label: 'From', fmt: v => v || 'website' }, { k: 'page', label: 'Page', fmt: v => v ? pageName(v) : '–' },
+        { k: 'place', label: 'Where', html: r => `${flag(r.country)} ${esc([r.city, r.region].filter(Boolean).join(', ') || country(r.country))}`, sortv: r => r.country || '' },
+        { k: 'status', label: 'Status', html: r => { const s = STATUS[r.status] || [r.status, '']; return `<span class="tag ${s[1]}" title="${esc(r.mailchimp || '')}">${esc(s[0])}</span>`; } },
+        { k: 'act', label: '', html: r => `${r.status === 'not_sent' ? `<button class="btn btn-ghost btn-sm" type="button" data-retry="${esc(r.email)}">Retry</button> ` : ''}<button class="btn btn-ghost btn-sm" type="button" data-del="${esc(r.email)}">Remove</button>`, sortv: r => r.email }
+      ], rows, { sort: 'created_at', empty: 'No signups yet. They show up here the moment someone joins.' });
+      const note = $('#subNote');
+      view.__act = act = async (body, msg) => {
+        const note = $('#subNote');
+        if (state.sample) { note.textContent = 'Sample data is on, so nothing changes.'; return; }
+        note.className = 'form-note'; note.textContent = msg;
+        try { d = await api('subscribers', {}, body); rows = d.rows.slice(); page = 0; draw(); const n = $('#subNote'); const r = d.done || {};
+          n.className = 'form-note' + (r.error ? ' err' : ''); n.textContent = r.error || (body.import ? `Imported ${num(r.added)} new of ${num(r.seen)} in Mailchimp.` : body.retry ? `${num(r.ok)} sent, ${num(r.failed)} still failing.` : 'Done.'); }
+        catch (e) { note.className = 'form-note err'; note.textContent = e.message; }
+      };
+      const ra = $('#retryAll'); if (ra) ra.addEventListener('click', () => act({ retry: 'all' }, 'Sending everyone to Mailchimp…'));
+      $('#subImport').addEventListener('click', () => act({ import: true }, 'Importing from Mailchimp. Big lists take a minute…'));
+      $('#subCsv').addEventListener('click', () => { if (state.sample) { note.textContent = 'Sample data is on. Turn it off to download the real list.'; return; } location.href = '/api/analytics/subscribers-export'; });
+      const more = $('#subMore'); if (more) more.addEventListener('click', async () => { page++; const n = await api('subscribers', { page }); rows = rows.concat(n.rows); draw(); });
+    };
+    draw();
+  };
+
   Views.settings = async (view, _, alive) => {
     const d = await api('settings'); if (!alive()) return;
     const staff = LS.get('rr-staff') === '1';
@@ -662,6 +718,11 @@
         if (dev === 'desktop') for (let i = 0; i < 600; i++) cells.push({ kind: 'move', cx: Math.floor(rnd() * 40), cy: Math.floor(Math.pow(rnd(), 1.6) * 260), n: 1 + Math.floor(rnd() * 6) });
         for (let d = 10; d <= 100; d += 5) cells.push({ kind: 'scroll', cx: 0, cy: d, n: Math.round(60 * Math.exp(-d / 45) + 4) });
         return { page: p.page, device: dev, views: 340, pages: PAGES.map(([pg]) => ({ page: pg, n: 10 })), cells, elements: [{ sel: 'button.ep-media', n: 120 }, { sel: 'a.btn', n: 88 }, { sel: 'button.menu-btn', n: 61 }, { sel: 'a.chip', n: 40 }, { sel: 'a.plat', n: 33 }] }; },
+      subscribers() { reset(); const s = series().map(p => ({ t: p.t, signups: Math.round(p.visitors * (.012 + rnd() * .02)) })); const now = s.reduce((a, p) => a + p.signups, 0);
+        const names = ['jules', 'sam.r', 'dana.k', 'mo', 'priya', 'alex.t', 'casey', 'river', 'nico', 'jo.m', 'tasha', 'ben'], hosts = ['gmail.com', 'outlook.com', 'icloud.com', 'yahoo.com', 'proton.me'];
+        const rows = Array.from({ length: 40 }, (_, i) => { const c = pick(COUNTRIES), city = (CITIES[c] || CITIES.US)[0]; return { email: names[i % names.length] + (i > 11 ? i : '') + '@' + hosts[i % hosts.length], source: pick([['join-home', 40], ['ep-notify', 25], ['join-episode-1', 20], ['join-store', 10], ['mailchimp import', 5]]), page: pick(PAGES.slice(0, 4)), status: rnd() < .93 ? 'subscribed' : rnd() < .5 ? 'pending' : 'not_sent', mailchimp: 'new via api', browser_id: rnd() < .6 ? 'sample' + (1e9 + i) : null, country: c, region: city[1], city: city[0], signups: 1, created_at: new Date(Date.now() - i * 1.7 * 864e5 * rnd()).toISOString() }; });
+        return { total: 1240 + now, now, prev: Math.round(now * .82), notSent: rows.filter(r => r.status === 'not_sent').length, pending: rows.filter(r => r.status === 'pending').length, series: s, hourly: s[0] && s[0].t.length > 10,
+          sources: [{ k: 'join-home', n: Math.round(now * .45) }, { k: 'ep-notify', n: Math.round(now * .27) }, { k: 'join-episode-1', n: Math.round(now * .18) }, { k: 'join-store', n: Math.round(now * .1) }], pages: [{ k: '/', n: Math.round(now * .5) }, { k: '/episode-1.html', n: Math.round(now * .3) }, { k: '/episode-2.html', n: Math.round(now * .12) }, { k: '/store.html', n: Math.round(now * .08) }], rows, page: 0 }; },
       settings() { return { excluded_ips: [{ ip: '203.0.113.7', label: 'Studio wifi', added: new Date().toISOString() }], heat_pages: 'all', filtered: { bot_ua: 412, no_js: 37, likely_bots: 58, excluded_ip: 96 },
         custom: [{ name: 'Played video', n: 380, last: new Date().toISOString() }, { name: 'Newsletter signup', n: 41, last: new Date(Date.now() - 36e5).toISOString() }, { name: 'Added to bag', n: 36, last: new Date(Date.now() - 72e5).toISOString() }],
         pages: PAGES.map(p => p[0]), myIp: '203.0.113.7', retentionDays: 400, tz: 'America/New_York' }; }

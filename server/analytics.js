@@ -4,6 +4,7 @@
         CRON_SECRET (Vercel cron), ANALYTICS_TZ (default America/New_York), ANALYTICS_ORIGINS (extra hosts, comma separated)
    Nothing here stores a raw IP or user agent, except IPs the team adds to its own exclusion list. */
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { SUBSCRIBER_SCHEMA, saveSubscriber, subscribersData, subscribersCsv, subscribersAction } from './subscribers.js';
 
 export const RETENTION_DAYS = 400;
 const LIVE_SECONDS = 100;          // a heartbeat every 45 s, so two missed beats means gone
@@ -60,7 +61,7 @@ const SCHEMA = [
 // Neon through Vercel can add a prefix (STORAGE_DATABASE_URL, NEON_POSTGRES_URL...), so look for any of them
 export const dbUrl = env => env.DATABASE_URL || env.POSTGRES_URL || env.DATABASE_URL_UNPOOLED ||
   Object.keys(env).filter(k => /(^|_)(DATABASE_URL|POSTGRES_URL)$/.test(k)).sort().map(k => env[k]).find(v => /^postgres(ql)?:\/\//.test(v || '')) || '';
-async function migrate() { for (const s of SCHEMA) await query(s); }
+async function migrate() { for (const s of [...SCHEMA, ...SUBSCRIBER_SCHEMA]) await query(s); }
 export const ensure = env => db(env);
 
 /* ---------- request helpers ---------- */
@@ -586,6 +587,11 @@ export async function handle(req, env) {
       case 'visitor': return json(await visitor(q, clip(url.searchParams.get('id'), 40)));
       case 'heat': return json(await heatData(q, B, url));
       case 'export': return await exportCsv(q, B, url);
+      case 'subscribers': {
+        const done = req.method === 'POST' ? await subscribersAction(q, env, await req.json().catch(() => ({}))) : null;
+        return json({ ...(await subscribersData(q, B, url)), done });
+      }
+      case 'subscribers-export': return await subscribersCsv(q);
       case 'settings':
         if (req.method === 'POST') {
           const body = await req.json().catch(() => ({}));
@@ -620,4 +626,14 @@ export async function linkEmail(env, req, browserId, email) {
     const q = await db(env); if (!q) return;
     await q(`insert into analytics_people (browser_id, email) values ($1, $2) on conflict (browser_id) do update set email = excluded.email, linked_at = now()`, [browserId, String(email).toLowerCase().slice(0, 254)]);
   } catch (_) {}
+}
+
+/* every newsletter signup lands in our own subscribers table; returns false if there's no database to save to */
+export async function recordSignup(env, req, info) {
+  try {
+    const q = await db(env); if (!q) return false;
+    const allowed = ID.test(info.browserId || '') && req.headers.get('sec-gpc') !== '1' && req.headers.get('dnt') !== '1' && !EU.has(geo(req).country || '');
+    await saveSubscriber(q, req, { ...info, browserId: allowed ? info.browserId : null });
+    return true;
+  } catch (e) { if (env.ANALYTICS_DEBUG === '1') console.error('signup', e); return false; }
 }
