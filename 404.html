@@ -30,10 +30,14 @@ a{color:inherit;text-decoration:none}
   radial-gradient(40% 45% at 50% 28%,color-mix(in srgb,var(--violet) 26%,transparent),transparent 70%),
   radial-gradient(70% 60% at 85% 20%,color-mix(in srgb,var(--blue) 18%,transparent),transparent 70%),
   radial-gradient(60% 60% at 10% 100%,color-mix(in srgb,var(--magenta) 18%,transparent),transparent 70%),var(--ink)}
+#ball{position:fixed;inset:0;width:100%!important;height:100%!important;display:block;z-index:1;pointer-events:none;opacity:0;transition:opacity 1.2s var(--ease)}
+#ball.on{opacity:1}
+#ballSpots{position:fixed;inset:0;width:100vw;height:100vh;z-index:2;pointer-events:none;mix-blend-mode:screen;opacity:0;transition:opacity 1.2s var(--ease)}
+#ballSpots.on{opacity:.9}
 body::after{content:"";position:fixed;inset:0;z-index:5;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 .home{position:fixed;z-index:6;top:calc(env(safe-area-inset-top,0px) + 22px);left:clamp(16px,4vw,56px);width:64px;aspect-ratio:380/350;background:url("/media/logo.webp") center/contain no-repeat}
-main{position:relative;z-index:4;min-height:100svh;display:grid;align-content:center;justify-items:center;gap:18px;text-align:center;padding:clamp(90px,12vh,140px) clamp(16px,4vw,56px)}
+main{position:relative;z-index:4;min-height:100svh;display:grid;align-content:end;justify-items:center;gap:18px;text-align:center;padding:0 clamp(16px,4vw,56px) clamp(48px,9vh,110px)}
 .label{display:inline-flex;align-items:center;gap:10px;margin:0;font:500 12px/1 var(--f-mono);letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
 .label svg{width:12px;height:12px;fill:var(--magenta);filter:drop-shadow(0 0 6px var(--magenta))}
 h1{margin:0;font:900 clamp(3.2rem,9vw,8rem)/.9 var(--f-display);text-transform:uppercase;text-wrap:balance}
@@ -59,6 +63,8 @@ p.sub{margin:0;max-width:40ch;font-size:clamp(1.02rem,1.3vw,1.18rem);color:color
   <symbol id="play" viewBox="0 0 24 24"><path d="M6 3.5v17a1 1 0 0 0 1.5.86l14-8.5a1 1 0 0 0 0-1.72l-14-8.5A1 1 0 0 0 6 3.5Z"/></symbol>
 </svg>
 <div class="stage" aria-hidden="true"></div>
+<canvas id="ball" aria-hidden="true"></canvas>
+<canvas id="ballSpots" aria-hidden="true"></canvas>
 <a class="home" href="/" aria-label="Rabble &amp; Rouse home"></a>
 <main>
   <p class="label rise"><svg aria-hidden="true"><use href="#spark"/></svg>Error 404</p>
@@ -70,5 +76,16 @@ p.sub{margin:0;max-width:40ch;font-size:clamp(1.02rem,1.3vw,1.18rem);color:color
     <a class="btn btn-ghost" href="/store.html">Shop merch</a>
   </div>
 </main>
+<script type="module">
+/* the mirror ball keeps turning even when the page is gone (ball.js) */
+import { hangBall } from '/ball.js';
+try {
+  hangBall({
+    canvas: document.getElementById('ball'), spots: document.getElementById('ballSpots'),
+    // hangs centered, above the message
+    place: (w, h) => { const rad = Math.min(w * .2, h * (w < 760 ? .17 : .19), 230); return { cx: w / 2, cy: Math.max(rad + 40, h * (w < 760 ? .27 : .29)), rad }; }
+  });
+} catch (_) { document.getElementById('ball').remove(); }
+</script>
 </body>
 </html>

@@ -12,4 +12,4 @@ Live site: https://rabble-rouse.vercel.app (the GitHub Pages copy forwards there
 
 ## Analytics
 
-First-party, cookie-free analytics with a staff dashboard at `/admin/analytics`. Setup, definitions and the custom action snippet: `docs/analytics.md`. Privacy policy text: `docs/analytics-privacy.md`.
+First-party, cookie-free analytics with a staff dashboard at `/admin`. Setup, definitions and the custom action snippet: `docs/analytics.md`. Privacy policy text: `docs/analytics-privacy.md`.

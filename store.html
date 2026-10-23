@@ -575,6 +575,8 @@ main{position:relative;z-index:1}
 .shop-hero .wrap{display:grid;gap:22px}
 #shopBall{position:absolute;inset:0;width:100%!important;height:100%!important;display:block;z-index:0;pointer-events:none;opacity:0;transition:opacity 1.2s var(--ease)}
 #shopBall.on{opacity:1}
+#ballSpots{position:fixed;inset:0;width:100vw;height:100vh;z-index:3;pointer-events:none;mix-blend-mode:screen;opacity:0;transition:opacity 1.2s var(--ease)}
+#ballSpots.on{opacity:.9}
 .shop-hero .wrap{position:relative;z-index:1}
 .shop-title{margin:0;font:900 clamp(4.6rem,15vw,14rem)/.86 var(--f-display);text-transform:uppercase;letter-spacing:-.005em}
 .shop-sub{margin:0;max-width:44ch;font-size:clamp(1.05rem,1.35vw,1.22rem);color:color-mix(in srgb,var(--text) 82%,transparent)}
@@ -725,6 +727,7 @@ main{position:relative;z-index:1}
 
 <div class="ambient" aria-hidden="true"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
 
+<canvas id="ballSpots" aria-hidden="true"></canvas>
 <main>
   <section class="shop-hero" id="top" aria-labelledby="shop-title">
     <canvas id="shopBall" aria-hidden="true"></canvas>
@@ -823,170 +826,26 @@ import * as THREE from './vendor/three.module.js';
 window.THREE = THREE;
 dispatchEvent(new Event('three-ready'));
 
-/* ---------- merch: a mirror ball hanging to the right of the title ---------- */
+/* ---------- merch: a mirror ball hanging to the right of the title, throwing light around the room (ball.js) ---------- */
 (() => {
-  const canvas = document.getElementById('shopBall');
-  if (!canvas) return;
-  try {
-    const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' });
-    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
-    renderer.setClearColor(0x000000, 0);
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(32, 1, .1, 100);
-    camera.position.set(0, 0, 14);
-
-    // the ball: hundreds of small square mirrors on a sphere, each a hair off-angle so they catch light one by one
-    const R = 2.6, rings = 30, tiles = [];
-    for (let i = 1; i < rings; i++) {
-      const phi = Math.PI * i / rings, count = Math.max(6, Math.round(rings * 2 * Math.sin(phi)));
-      for (let j = 0; j < count; j++) tiles.push([phi, (j + (i % 2) * .5) / count * Math.PI * 2]);
-    }
-    const size = (Math.PI * R / rings) * .86;
-    const mirrors = new THREE.InstancedMesh(
-      new THREE.BoxGeometry(size, size, .05),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: .02, envMapIntensity: 2, flatShading: true }),
-      tiles.length);
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), pos = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1), look = new THREE.Object3D();
-    const base = [], col = new THREE.Color();
-    tiles.forEach(([phi, th], k) => {
-      pos.set(R * Math.sin(phi) * Math.cos(th), R * Math.cos(phi), R * Math.sin(phi) * Math.sin(th));
-      look.position.copy(pos); look.lookAt(pos.clone().multiplyScalar(2));
-      e.set((Math.random() - .5) * .14, (Math.random() - .5) * .14, 0); q.setFromEuler(e);
-      look.quaternion.multiply(q);
-      m.compose(pos, look.quaternion, one); mirrors.setMatrixAt(k, m);
-      const tint = Math.random();
-      base.push(tint < .84 ? new THREE.Color(.8, .8, .84) : tint < .92 ? new THREE.Color(.95, .72, .86) : new THREE.Color(.72, .82, 1));
-      mirrors.setColorAt(k, base[k]);
-    });
-    const ball = new THREE.Group();
-    ball.add(mirrors);
-    // a dark core so gaps between mirrors read as grout, not see-through
-    ball.add(new THREE.Mesh(new THREE.SphereGeometry(R * .97, 32, 24), new THREE.MeshBasicMaterial({ color: 0x0b0912 })));
-    // pivot sits where the string meets the ceiling, so any sway swings from the top, not the ball's middle
-    const pivot = new THREE.Group(), hang = new THREE.Group();
-    hang.add(ball); pivot.add(hang);
-    const rod = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, 1, 6), new THREE.MeshBasicMaterial({ color: 0x3a3450 }));
-    pivot.add(rod);
-    scene.add(pivot);
-
-    // a painted room for the mirrors to reflect: dark club, neon in the show's colors, a few hot lamps
-    const env = (() => {
-      const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
-      const g = c.getContext('2d');
-      const bg = g.createLinearGradient(0, 0, 0, 512);
-      bg.addColorStop(0, '#4a3f66'); bg.addColorStop(.3, '#241c38'); bg.addColorStop(.55, '#120e1e'); bg.addColorStop(1, '#07060c');
-      g.fillStyle = bg; g.fillRect(0, 0, 1024, 512);
-      const blob = (x, y, rx, ry, color, a) => {
-        g.save(); g.translate(x, y); g.scale(rx / ry, 1);
-        const r = g.createRadialGradient(0, 0, 0, 0, 0, ry);
-        r.addColorStop(0, color); r.addColorStop(1, 'rgba(0,0,0,0)');
-        g.globalAlpha = a; g.fillStyle = r; g.beginPath(); g.arc(0, 0, ry, 0, Math.PI * 2); g.fill(); g.restore();
-      };
-      [[120, 250, '#ff2d95'], [380, 230, '#2f86ff'], [620, 260, '#b44cff'], [880, 240, '#ff2d95'], [1010, 250, '#2f86ff'], [250, 300, '#b44cff'], [760, 300, '#2f86ff']]
-        .forEach(([x, y, col]) => blob(x, y, 190, 95, col, 1));
-      for (let x = 0; x < 1024; x += 128) blob(x + 64, 40, 60, 14, '#ffffff', .85); // ceiling strip lights
-      [[200, 150], [470, 110], [700, 160], [930, 120], [90, 120]].forEach(([x, y]) => { blob(x, y, 26, 26, '#ffffff', 1); blob(x, y, 8, 8, '#ffffff', 1); });
-      blob(512, 470, 520, 60, '#3a1630', .7); // stage glow off the floor
-      // scattered lamps and reflections: what makes each tile catch something different
-      let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-      for (let i = 0; i < 140; i++) {
-        const y = 20 + rnd() * 380, r = 3 + rnd() * 10, pick = rnd();
-        blob(rnd() * 1024, y, r * 1.6, r, pick < .55 ? '#ffffff' : pick < .75 ? '#ff8cc4' : pick < .9 ? '#86b8ff' : '#d9a6ff', .55 + rnd() * .45);
-      }
-      const t = new THREE.CanvasTexture(c);
-      t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace;
-      const pm = new THREE.PMREMGenerator(renderer);
-      const out = pm.fromEquirectangular(t).texture; t.dispose(); pm.dispose();
-      return out;
-    })();
-    scene.environment = env;
-    scene.add(new THREE.AmbientLight(0x8a7fb0, .2));
-    const lights = [[0xff2d95, 60], [0x2f86ff, 60], [0xffffff, 38], [0xb44cff, 40]].map(([c, i]) => { const l = new THREE.PointLight(c, i, 30, 1.6); scene.add(l); return l; });
-
-    let w = 0, h = 0;
-    const title = document.getElementById('shop-title');
-    const fit = force => {
-      const r = canvas.getBoundingClientRect();
-      if (!r.width || !r.height) return;
-      if (force !== true && r.width === w && r.height === h) return;
-      w = r.width; h = r.height;
-      renderer.setSize(w, h, false);
-      camera.aspect = w / h; camera.updateProjectionMatrix();
-      const unit = 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z / h; // world units per px
+  const canvas = document.getElementById('shopBall'), title = document.getElementById('shop-title');
+  if (!canvas || !title) return;
+  import('./ball.js').then(({ hangBall }) => hangBall({
+    canvas, spots: document.getElementById('ballSpots'), drop: window.rrStage || Promise.resolve(),
+    place(w, h, r) {
       // the title's actual text box (not the full-width h1), measured line by line
       const range = document.createRange(); range.selectNodeContents(title);
-      const lines = [...range.getClientRects()];
-      const tb = title.getBoundingClientRect();
-      const right = Math.max(...lines.map(l => l.right)) - r.left, top = tb.top - r.top, mid = top + tb.height / 2;
+      const lines = [...range.getClientRects()], tb = title.getBoundingClientRect();
+      const right = Math.max(...lines.map(l => l.right)) - r.left, top = tb.top - r.top;
       const margin = Math.max(16, w * .04);
       let rad = Math.min(260, Math.max(80, tb.height * .64, w * .165)), cx, cy;
       if (w - margin - right >= rad * 1.6) {
         cx = Math.min(w - margin - rad, right + 30 + rad + Math.max(0, w - margin - right - rad * 2 - 30) * .35);
-        cy = Math.max(rad + 92, top + tb.height * .3); // raised: rides high beside the title, clear of the nav
-      }
-      else { rad = Math.min(rad, Math.max(48, top * .3), w * .15); cx = w - margin - rad; cy = Math.max(rad + 12, top - rad - 14); } // no room beside it: hang above, top right
-      const s = rad * unit / R, topY = h / 2 * unit + .5, ballY = (h / 2 - cy) * unit, arm = topY - ballY;
-      pivot.position.set((cx - w / 2) * unit, topY, 0);
-      hang.scale.setScalar(s); geo.arm = arm; geo.s = s;
-      hangAt(dropK());
-    };
-    // the drop: starts above the page and falls on its string once the curtains are open, with a little bounce
-    const geo = { arm: 1, s: 1 };
-    let dropAt = calm ? -1e9 : Infinity;
-    const dropK = () => {
-      const d = (performance.now() - dropAt) / 1000;
-      if (d <= 0 || !isFinite(d)) return d > 0 ? 1 : 0;
-      return d > 4 ? 1 : 1 - Math.exp(-5.5 * d) * Math.cos(7.5 * d);
-    };
-    const hangAt = k => {
-      const lift = R * geo.s * 1.15, a = -lift + (geo.arm + lift) * k, len = Math.max(.001, a - R * geo.s);
-      hang.position.y = -a;
-      rod.scale.set(geo.s, len, geo.s); rod.position.y = -len / 2;
-    };
-    fit(true); addEventListener('resize', fit);
-    document.fonts && document.fonts.ready.then(() => fit(true));
-    setTimeout(() => fit(true), 1600);
-    canvas.classList.add('on');
-    (window.rrStage || Promise.resolve()).then(() => { if (!calm) dropAt = performance.now() + 150; });
-
-    let px = 0, py = 0, tx = 0, ty = 0;
-    addEventListener('pointermove', ev => { tx = ev.clientX / innerWidth - .5; ty = ev.clientY / innerHeight - .5; });
-    let visible = true, raf = 0, last = performance.now(), t = 0;
-    const at = new THREE.Vector3(), sparkle = new Set(), hot = new THREE.Color(2.6, 2.6, 2.8);
-    const frame = now => {
-      const dt = Math.min(.05, (now - last) / 1000); last = now; t += dt;
-      ball.rotation.y += dt * .22;
-      px += (tx - px) * .05; py += (ty - py) * .05;
-      const k = dropK(), since = (now - dropAt) / 1000;
-      hangAt(k);
-      pivot.rotation.z = Math.sin(t * .5) * .012 - px * .06 + (since > 0 && since < 6 ? Math.exp(-1.6 * since) * Math.sin(since * 4.2) * .05 : 0);
-      ball.rotation.x = py * .25;
-      lights.forEach((l, i) => {
-        const a = t * (.35 + i * .07) + i * 1.7;
-        l.position.set(Math.cos(a) * 7, Math.sin(a * .8 + i) * 4 + 1, 6 + Math.sin(a) * 2);
-        l.position.add(hang.getWorldPosition(at));
-      });
-      // a few mirrors flash white at a time
-      if (Math.random() < .5) sparkle.add({ k: Math.floor(Math.random() * tiles.length), life: 1 });
-      for (const sp of sparkle) {
-        sp.life -= dt * 2.6;
-        col.copy(base[sp.k]).lerp(hot, Math.max(0, Math.min(1, sp.life * 1.4)));
-        mirrors.setColorAt(sp.k, col);
-        if (sp.life <= 0) { mirrors.setColorAt(sp.k, base[sp.k]); sparkle.delete(sp); }
-      }
-      mirrors.instanceColor.needsUpdate = true;
-      renderer.render(scene, camera);
-      if (visible && !calm) raf = requestAnimationFrame(frame);
-    };
-    new IntersectionObserver(([en]) => {
-      visible = en.isIntersecting; fit(true);
-      cancelAnimationFrame(raf);
-      if (visible) { last = performance.now(); raf = requestAnimationFrame(frame); }
-    }).observe(canvas);
-    requestAnimationFrame(frame);
-  } catch (err) { canvas.remove(); }
+        cy = Math.max(rad + 92, top + tb.height * .3);   // rides high beside the title, clear of the nav
+      } else { rad = Math.min(rad, Math.max(48, top * .3), w * .15); cx = w - margin - rad; cy = Math.max(rad + 12, top - rad - 14); }   // no room beside it: top right
+      return { cx, cy, rad };
+    }
+  })).catch(() => canvas.remove());
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>

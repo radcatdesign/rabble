@@ -57,14 +57,26 @@
       "destination": "/api/analytics?op=:op"
     },
     {
-      "source": "/admin/analytics",
-      "destination": "/admin/analytics/index.html"
+      "source": "/admin",
+      "destination": "/admin/index.html"
     }
   ],
   "crons": [
     {
       "path": "/api/analytics?op=cron",
       "schedule": "17 9 * * *"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/admin/analytics",
+      "destination": "/admin",
+      "permanent": false
+    },
+    {
+      "source": "/admin/analytics/",
+      "destination": "/admin",
+      "permanent": false
     }
   ]
 }

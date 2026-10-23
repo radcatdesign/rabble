@@ -1,6 +1,6 @@
 # Site analytics
 
-First-party analytics for rabble-rouse.vercel.app (and rabbleandrouse.com once the domain moves). No cookies, no third parties, no cookie banner. The dashboard is at **/admin/analytics** and only the team can sign in.
+First-party analytics for rabble-rouse.vercel.app (and rabbleandrouse.com once the domain moves). No cookies, no third parties, no cookie banner. The dashboard is at **/admin** and only the team can sign in.
 
 ## Setup
 
@@ -21,7 +21,7 @@ The daily job (`vercel.json`, 9:17 UTC) rotates the visitor salt, rolls up yeste
 
 - `a.js`: the tracker, on every public page (under 4 KB gzipped, loaded with `defer`). It does nothing on other hosts, inside the heatmap viewer, or in a browser signed in to the dashboard.
 - `api/analytics.js` → `server/analytics.js`: one serverless function for everything (`/api/analytics/collect`, `/presence`, the dashboard data, `/cron`).
-- `admin/analytics/`: the dashboard (`index.html` is built from `admin.tpl.html` with the site's own styles; `app.js` is the app; `benchmarks.js` holds the comparison figures; `world.js` is the map outline).
+- `admin/`: the dashboard. `admin/index.html` is built from `admin.tpl.html` with the site's own styles; `admin/analytics/app.js` is the app; `benchmarks.js` holds the comparison figures; `world.js` is the map outline.
 
 ## What's collected
 
