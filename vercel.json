@@ -1,7 +1,70 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": { "api/*.js": { "maxDuration": 15 } },
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 15
+    }
+  },
   "headers": [
-    { "source": "/server/(.*)", "headers": [{ "key": "x-robots-tag", "value": "noindex" }] }
+    {
+      "source": "/server/(.*)",
+      "headers": [
+        {
+          "key": "x-robots-tag",
+          "value": "noindex"
+        }
+      ]
+    },
+    {
+      "source": "/admin/(.*)",
+      "headers": [
+        {
+          "key": "x-robots-tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "cache-control",
+          "value": "no-store"
+        },
+        {
+          "key": "x-frame-options",
+          "value": "SAMEORIGIN"
+        }
+      ]
+    },
+    {
+      "source": "/docs/(.*)",
+      "headers": [
+        {
+          "key": "x-robots-tag",
+          "value": "noindex"
+        }
+      ]
+    },
+    {
+      "source": "/a.js",
+      "headers": [
+        {
+          "key": "cache-control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/analytics/:op",
+      "destination": "/api/analytics?op=:op"
+    },
+    {
+      "source": "/admin/analytics",
+      "destination": "/admin/analytics/index.html"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/analytics?op=cron",
+      "schedule": "17 9 * * *"
+    }
   ]
 }

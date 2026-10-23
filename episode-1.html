@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>/* one site: the GitHub Pages copy forwards to the live Vercel site */
 if (location.hostname === 'radcatdesign.github.io') location.replace('https://rabble-rouse.vercel.app' + location.pathname.replace(/^\/rabble/, '') + location.search + location.hash);</script>
+<script src="a.js" defer></script>
+<script>if (/[?&]rr-heatmap/.test(location.search)) document.documentElement.classList.add('rr-heatmap');</script>
 <script>/* page transition: arriving from another page, start behind closed curtains */
 try { if (sessionStorage.getItem('rr-curtain')) { sessionStorage.removeItem('rr-curtain'); var h = document.documentElement, still = sessionStorage.getItem('rr-curtain-still'); h.classList.add('rr-cur', 'rr-shut'); if (still) { h.classList.add('rr-snap'); h.style.setProperty('--rr-snap', 'url(' + still + ')'); sessionStorage.removeItem('rr-curtain-still'); } setTimeout(function () { if (!window.rrStage) document.documentElement.classList.remove('rr-cur', 'rr-shut'); }, 3000); } } catch (e) {}</script>
 <title>Episode 01: Cheryl Katon · Rabble &amp; Rouse</title>
@@ -119,6 +121,8 @@ html::after{right:0;transform-origin:100% 50%;transform:translateX(102%) scaleX(
 html.rr-cur::before,html.rr-cur::after{display:block}
 html.rr-shut::before,html.rr-shut::after{transform:none;pointer-events:auto}
 html.rr-cut::before,html.rr-cut::after{transition:none}
+html.rr-heatmap .intro,html.rr-heatmap .cursor,html.rr-heatmap .dock,html.rr-heatmap .progress{display:none!important}
+html.rr-heatmap .rv{opacity:1!important}
 html.rr-snap::before{width:100%;background:#080711 var(--rr-snap) center/100% 100% no-repeat;box-shadow:none}
 html.rr-snap::after{display:none}
 .rr-cloth{position:fixed!important;inset:0;z-index:2147483601!important;pointer-events:none;opacity:0!important;transition:none!important}
@@ -1065,8 +1069,10 @@ dispatchEvent(new Event('three-ready'));
 
   /* ---------- player: season preview with sound, or the Episode 1 first look ---------- */
   let playerOrigin = [innerWidth / 2, innerHeight / 2], lastFocus = null;
+  const track = (n, l) => { try { if (window.analytics) window.analytics.track(n, l); } catch (_) {} };
   function openPlayer(kind, from) {
     lastFocus = document.activeElement;
+    track('Played video', kind && kind.label || '');
     playerMount.innerHTML = '';
     playerMount.classList.toggle('is-vertical', !!(kind && kind.vertical));
     if (kind && kind.yt) {
@@ -1201,9 +1207,10 @@ dispatchEvent(new Event('three-ready'));
 
   /* ---------- signup forms: straight into the Mailchimp list ---------- */
   async function subscribe(email, source) {
-    const res = await fetch(`${SITE_API}/subscribe`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, source }) });
+    const res = await fetch(`${SITE_API}/subscribe`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, source, bid: window.analytics && window.analytics.browserId ? window.analytics.browserId() : null }) });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'network');
+    track('Newsletter signup', source);
     return data.status;
   }
   const page = (location.pathname.split('/').pop() || 'index.html').replace('.html', '') || 'index';
@@ -1609,8 +1616,9 @@ dispatchEvent(new Event('three-ready'));
   gsap.registerPlugin(ScrollTrigger);
   const intro = $('.intro');
 
-  if (reduce) {
+  if (reduce || document.documentElement.classList.contains('rr-heatmap')) {
     if (intro) intro.remove();
+    if (!reduce) { window.rrStage = Promise.resolve(); if (window.ScrollTrigger) ScrollTrigger.getAll().forEach(t => t.kill()); }
     return;
   }
 

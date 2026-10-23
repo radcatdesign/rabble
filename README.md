@@ -9,3 +9,7 @@ Libraries load from jsDelivr: GSAP + ScrollTrigger, Lenis, and Three.js (curtain
 Merch: `store.html` plus the store routes in `api/` (Vercel) and `functions/api/` (Cloudflare). See `STORE-SETUP.md` to connect Printful and Stripe.
 
 Live site: https://rabble-rouse.vercel.app (the GitHub Pages copy forwards there).
+
+## Analytics
+
+First-party, cookie-free analytics with a staff dashboard at `/admin/analytics`. Setup, definitions and the custom action snippet: `docs/analytics.md`. Privacy policy text: `docs/analytics-privacy.md`.

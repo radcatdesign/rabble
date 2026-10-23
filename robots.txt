@@ -4,6 +4,8 @@ Allow: /
 Disallow: /api/
 Disallow: /server/
 Disallow: /functions/
+Disallow: /admin/
+Disallow: /docs/
 
 User-agent: GPTBot
 User-agent: OAI-SearchBot
@@ -18,5 +20,6 @@ User-agent: Applebot-Extended
 User-agent: CCBot
 Allow: /
 Disallow: /api/
+Disallow: /admin/
 
 Sitemap: https://rabble-rouse.vercel.app/sitemap.xml
