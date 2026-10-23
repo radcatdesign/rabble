@@ -36,7 +36,7 @@
       bid = b.id; ls('rr-bid', JSON.stringify(b));
     }
 
-    var path = function () { return L.pathname.replace(/\/index\.html$/, '/') || '/'; };
+    var path = function () { return L.pathname.replace(/\/index(\.html)?$/, '/').replace(/\.html$/, '') || '/'; };
     var base = function () { return { v: vid, b: bid, r: ret, d: dev(), l: N.language || '', z: tz, w: W.innerWidth || 0 }; };
     var post = function (op, body, beacon) {
       try {

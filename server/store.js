@@ -171,8 +171,8 @@ export async function createCheckout(env, items, origin) {
     phone_number_collection: { enabled: true },
     // the webhook rebuilds the Printful order from this
     metadata: { cart: cart.map(c => `${c.id}x${c.qty}`).join(',') },
-    success_url: `${site}/store.html?order=success`,
-    cancel_url: `${site}/store.html?order=cancel`
+    success_url: `${site}/store?order=success`,
+    cancel_url: `${site}/store?order=cancel`
   });
   return { url: session.url };
 }

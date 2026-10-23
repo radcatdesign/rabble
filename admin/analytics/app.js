@@ -483,7 +483,7 @@
       $$('#hk .chip').forEach(b => { b.setAttribute('aria-pressed', b.dataset.v === kind); b.disabled = b.dataset.v === 'move' && device !== 'desktop'; });
       if (kind === 'move' && device !== 'desktop') { kind = 'click'; return load(); }
       const d = await api('heat', { page, device }); if (!alive()) return;
-      const pages = [...new Set(['/', '/episode-1.html', '/episode-2.html', '/store.html', ...d.pages.map(p => p.page)])];
+      const pages = [...new Set(['/', '/episode-1', '/episode-2', '/store', ...d.pages.map(p => p.page)])];
       sel.innerHTML = pages.map(p => `<option value="${esc(p)}"${p === page ? ' selected' : ''}>${esc(pageName(p))}</option>`).join('');
       const cells = d.cells.filter(c => c.kind === kind);
       $('#hinfo').textContent = `${num(d.views)} page view${d.views === 1 ? '' : 's'} on ${device}. ${kind === 'scroll' ? 'Shaded areas were seen by fewer people.' : num(cells.reduce((a, c) => a + c.n, 0)) + (kind === 'click' ? ' clicks.' : ' cursor samples.')} Screenshot: the live page at ${WIDTHS[device][0]} px wide.`;
@@ -685,7 +685,7 @@
     let seed = 7;
     const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
     const pick = (list) => { const t = list.reduce((a, x) => a + x[1], 0); let r = rnd() * t; for (const x of list) { if ((r -= x[1]) <= 0) return x[0]; } return list[0][0]; };
-    const PAGES = [['/', 46], ['/episode-1.html', 22], ['/store.html', 16], ['/episode-2.html', 12], ['/404.html', 1]];
+    const PAGES = [['/', 46], ['/episode-1', 22], ['/store', 16], ['/episode-2', 12], ['/404', 1]];
     const SOURCES = [['Direct', 30], ['Instagram', 18], ['Google', 14], ['newsletter', 10], ['YouTube', 8], ['TikTok', 7], ['Facebook', 5], ['LinkedIn', 4], ['ChatGPT', 2], ['Bluesky', 2]];
     const COUNTRIES = [['US', 74], ['CA', 8], ['GB', 5], ['AU', 3], ['DE', 2], ['IE', 2], ['NL', 1], ['MX', 1], ['IN', 1]];
     const DEVICES = [['phone', 61], ['desktop', 33], ['tablet', 6]];
@@ -715,7 +715,7 @@
           devices: top(DEVICES, cur.visits), countries: top(COUNTRIES, cur.visits), actions: top(ACTIONS, cur.actions).map(r => ({ ...r, u: Math.round(r.n * .8) })) }; },
       pages() { reset(); const t = totals(1);
         const table = PAGES.map(([p, w]) => { const views = Math.round(t.views * w / 97), entries = Math.round(t.visits * w / 97 * (p === '/' ? 1.4 : .8));
-          return { path: p, views, visitors: Math.round(views * .72), avg_active: p === '/404.html' ? 8000 : 40000 + rnd() * 90000, avg_scroll: 35 + rnd() * 50, entries, bounces: Math.round(entries * (.3 + rnd() * .25)), exits: Math.round(views * (.3 + rnd() * .3)) }; });
+          return { path: p, views, visitors: Math.round(views * .72), avg_active: p === '/404' ? 8000 : 40000 + rnd() * 90000, avg_scroll: 35 + rnd() * 50, entries, bounces: Math.round(entries * (.3 + rnd() * .25)), exits: Math.round(views * (.3 + rnd() * .3)) }; });
         const heat = []; for (let d = 1; d <= 7; d++) for (let h = 0; h < 24; h++) heat.push({ d, h, n: Math.round((h > 7 && h < 24 ? 10 + 18 * Math.sin((h - 7) / 17 * Math.PI) : 2) * (d > 5 ? 1.2 : 1) * (.7 + rnd() * .6)) });
         return { table, heat }; },
       audience() { reset(); const t = totals(1), v = t.visits;
@@ -726,10 +726,10 @@
       actions() { reset(); const t = totals(1), s = series();
         const list = ACTIONS.map(([name, w]) => { const n = Math.round(t.actions * w / 100); return { name, n, u: Math.round(n * .8), visits: Math.round(n * .85) }; });
         return { list, prev: list.map(r => ({ name: r.name, n: Math.round(r.n * (.7 + rnd() * .5)) })), trend: list.flatMap(r => s.map(p => ({ name: r.name, t: p.t.length === 10 ? p.t + 'T00:00' : p.t, n: Math.round(r.n / s.length * (.5 + rnd())) }))),
-          where: list.flatMap(r => [{ name: r.name, path: r.name.includes('bag') || r.name.includes('checkout') || r.name.includes('Order') ? '/store.html' : '/', n: Math.round(r.n * .6) }, { name: r.name, path: '/episode-1.html', n: Math.round(r.n * .3) }]) }; },
+          where: list.flatMap(r => [{ name: r.name, path: r.name.includes('bag') || r.name.includes('checkout') || r.name.includes('Order') ? '/store' : '/', n: Math.round(r.n * .6) }, { name: r.name, path: '/episode-1', n: Math.round(r.n * .3) }]) }; },
       'action-visits'(p) { reset(); return Array.from({ length: 14 }, (_, i) => { const x = person(false, i); return { visit_id: 'v' + i, started: new Date(Date.now() - rnd() * spanDays() * 864e5).toISOString(), landing: pick(PAGES), source: x.source, device: x.device, country: x.country, views: 1 + Math.floor(rnd() * 5), active: 20000 + rnd() * 300000, browser_id: x.browser_id, email: x.email, labels: [p.name === 'Played video' ? 'Episode 1: Cheryl Katon' : p.name === 'Added to bag' ? 'Rabble Sweatshirt (Unisex)' : ''] }; }); },
       live() { reset(); seed += Math.floor(Date.now() / 12000) % 50; const n = 3 + Math.floor(rnd() * 5); return { live: Array.from({ length: n }, (_, i) => person(true, i)), left: Array.from({ length: 4 }, (_, i) => person(false, i + 20)) }; },
-      visitors() { reset(); return { page: 0, rows: Array.from({ length: 18 }, (_, i) => { const p = person(false, i); const visits = 2 + Math.floor(rnd() * 9); return { browser_id: p.browser_id || 'sample' + (1e9 + i), email: p.email, visits, pages: visits * 2 + Math.floor(rnd() * 8), actions: Math.floor(rnd() * 6), first_seen: new Date(Date.now() - (30 + rnd() * 200) * 864e5).toISOString(), last_seen: new Date(Date.now() - rnd() * 6 * 864e5).toISOString(), top_pages: ['/', '/episode-1.html', '/store.html'].slice(0, 1 + Math.floor(rnd() * 3)), top_actions: rnd() < .6 ? ['Played video'] : [] }; }) }; },
+      visitors() { reset(); return { page: 0, rows: Array.from({ length: 18 }, (_, i) => { const p = person(false, i); const visits = 2 + Math.floor(rnd() * 9); return { browser_id: p.browser_id || 'sample' + (1e9 + i), email: p.email, visits, pages: visits * 2 + Math.floor(rnd() * 8), actions: Math.floor(rnd() * 6), first_seen: new Date(Date.now() - (30 + rnd() * 200) * 864e5).toISOString(), last_seen: new Date(Date.now() - rnd() * 6 * 864e5).toISOString(), top_pages: ['/', '/episode-1', '/store'].slice(0, 1 + Math.floor(rnd() * 3)), top_actions: rnd() < .6 ? ['Played video'] : [] }; }) }; },
       visitor(p) { reset(); const x = person(true, 1); const visits = Array.from({ length: 4 }, (_, i) => { const start = Date.now() - (i * 9 + 1) * 864e5 - rnd() * 864e5; const l = log(start); return { visit_id: 'v' + i, started: new Date(start).toISOString(), source: i === 3 ? 'Instagram' : pick(SOURCES), device: x.device, country: x.country, city: x.city, active: l.reduce((a, y) => a + (y.active || 0), 0), log: l }; });
         return { browser_id: p.id, email: x.email, firstSource: 'Instagram', visits, live: rnd() < .5 ? { path: x.path, since: new Date().toISOString(), log: x.log } : null,
           totals: { visits: 4, pages: visits.reduce((a, v) => a + v.log.filter(y => y.kind === 'view').length, 0), actions: visits.reduce((a, v) => a + v.log.filter(y => y.kind === 'action').length, 0), active: visits.reduce((a, v) => a + v.active, 0), first: visits[3].started, last: visits[0].started } }; },
@@ -743,7 +743,7 @@
         const names = ['jules', 'sam.r', 'dana.k', 'mo', 'priya', 'alex.t', 'casey', 'river', 'nico', 'jo.m', 'tasha', 'ben'], hosts = ['gmail.com', 'outlook.com', 'icloud.com', 'yahoo.com', 'proton.me'];
         const rows = Array.from({ length: 40 }, (_, i) => { const c = pick(COUNTRIES), city = (CITIES[c] || CITIES.US)[0]; return { email: names[i % names.length] + (i > 11 ? i : '') + '@' + hosts[i % hosts.length], source: pick([['join-home', 40], ['ep-notify', 25], ['join-episode-1', 20], ['join-store', 10], ['mailchimp import', 5]]), page: pick(PAGES.slice(0, 4)), status: rnd() < .93 ? 'subscribed' : rnd() < .5 ? 'pending' : 'not_sent', mailchimp: 'new via api', browser_id: rnd() < .6 ? 'sample' + (1e9 + i) : null, country: c, region: city[1], city: city[0], signups: 1, created_at: new Date(Date.now() - i * 1.7 * 864e5 * rnd()).toISOString() }; });
         return { visits: Math.round(spanDays() * 128), total: 1240 + now, now, prev: Math.round(now * .82), notSent: rows.filter(r => r.status === 'not_sent').length, pending: rows.filter(r => r.status === 'pending').length, series: s, hourly: s[0] && s[0].t.length > 10,
-          sources: [{ k: 'join-home', n: Math.round(now * .45) }, { k: 'ep-notify', n: Math.round(now * .27) }, { k: 'join-episode-1', n: Math.round(now * .18) }, { k: 'join-store', n: Math.round(now * .1) }], pages: [{ k: '/', n: Math.round(now * .5) }, { k: '/episode-1.html', n: Math.round(now * .3) }, { k: '/episode-2.html', n: Math.round(now * .12) }, { k: '/store.html', n: Math.round(now * .08) }], rows, page: 0 }; },
+          sources: [{ k: 'join-home', n: Math.round(now * .45) }, { k: 'ep-notify', n: Math.round(now * .27) }, { k: 'join-episode-1', n: Math.round(now * .18) }, { k: 'join-store', n: Math.round(now * .1) }], pages: [{ k: '/', n: Math.round(now * .5) }, { k: '/episode-1', n: Math.round(now * .3) }, { k: '/episode-2', n: Math.round(now * .12) }, { k: '/store', n: Math.round(now * .08) }], rows, page: 0 }; },
       settings() { return { excluded_ips: [{ ip: '203.0.113.7', label: 'Studio wifi', added: new Date().toISOString() }], heat_pages: 'all', filtered: { bot_ua: 412, no_js: 37, likely_bots: 58, excluded_ip: 96 },
         custom: [{ name: 'Played video', n: 380, last: new Date().toISOString() }, { name: 'Newsletter signup', n: 41, last: new Date(Date.now() - 36e5).toISOString() }, { name: 'Added to bag', n: 36, last: new Date(Date.now() - 72e5).toISOString() }],
         pages: PAGES.map(p => p[0]), myIp: '203.0.113.7', retentionDays: 400, tz: 'America/New_York' }; }

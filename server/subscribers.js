@@ -17,7 +17,7 @@ const header = (req, k) => { const v = req.headers.get(k); try { return v ? deco
 // called by /api/subscribe for every signup, whatever Mailchimp said
 export async function saveSubscriber(q, req, { email, source, browserId, mailchimp, status }) {
   let page = null;
-  try { page = new URL(req.headers.get('referer') || '').pathname.replace(/\/index\.html$/, '/'); } catch (_) {}
+  try { page = new URL(req.headers.get('referer') || '').pathname.replace(/\/index(\.html)?$/, '/').replace(/\.html$/, '') || '/'; } catch (_) {}
   await q(`insert into subscribers (email, source, page, status, mailchimp, browser_id, country, region, city)
            values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
            on conflict (email) do update set signups = subscribers.signups + 1, updated_at = now(),

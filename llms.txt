@@ -11,8 +11,8 @@ Key facts:
 
 ## Episodes
 
-- [Episode 01: Cheryl Katon](https://rabble-rouse.vercel.app/episode-1.html): Katie sits down with the bravest woman we know to discuss growing up trans, living authentically, and the cost of visibility.
-- [Episode 02: Mistress Eustacia](https://rabble-rouse.vercel.app/episode-2.html): Katie sits down with a professional dominatrix to explore power exchange, setting better boundaries, and what it really means to give up control. (coming soon)
+- [Episode 01: Cheryl Katon](https://rabble-rouse.vercel.app/episode-1): Katie sits down with the bravest woman we know to discuss growing up trans, living authentically, and the cost of visibility.
+- [Episode 02: Mistress Eustacia](https://rabble-rouse.vercel.app/episode-2): Katie sits down with a professional dominatrix to explore power exchange, setting better boundaries, and what it really means to give up control. (coming soon)
 
 ## Watch or listen
 
@@ -24,7 +24,7 @@ Key facts:
 ## Site
 
 - [Home](https://rabble-rouse.vercel.app/): about the show, latest episodes, where to watch, the host, free stickers and the newsletter
-- [Merch](https://rabble-rouse.vercel.app/store.html): official apparel, drinkware, stickers, prints and accessories, made to order
+- [Merch](https://rabble-rouse.vercel.app/store): official apparel, drinkware, stickers, prints and accessories, made to order
 - [Full text for LLMs](https://rabble-rouse.vercel.app/llms-full.txt): every episode description and the show credits in one file
 
 ## Optional

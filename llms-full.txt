@@ -8,7 +8,7 @@ Katie Martell is a professional rabble-rouser and unapologetic truth-teller. Wit
 
 ## Episode 01: Cheryl Katon
 
-Page: https://rabble-rouse.vercel.app/episode-1.html
+Page: https://rabble-rouse.vercel.app/episode-1
 Status: Out now
 Guest: Cheryl Katon
 
@@ -36,7 +36,7 @@ Segments:
 
 ## Episode 02: Mistress Eustacia
 
-Page: https://rabble-rouse.vercel.app/episode-2.html
+Page: https://rabble-rouse.vercel.app/episode-2
 Status: Coming soon
 Guest: Mistress Eustacia
 

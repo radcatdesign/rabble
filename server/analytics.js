@@ -61,7 +61,21 @@ const SCHEMA = [
 // Neon through Vercel can add a prefix (STORAGE_DATABASE_URL, NEON_POSTGRES_URL...), so look for any of them
 export const dbUrl = env => env.DATABASE_URL || env.POSTGRES_URL || env.DATABASE_URL_UNPOOLED ||
   Object.keys(env).filter(k => /(^|_)(DATABASE_URL|POSTGRES_URL)$/.test(k)).sort().map(k => env[k]).find(v => /^postgres(ql)?:\/\//.test(v || '')) || '';
-async function migrate() { for (const s of [...SCHEMA, ...SUBSCRIBER_SCHEMA]) await query(s); }
+async function migrate() {
+  for (const s of [...SCHEMA, ...SUBSCRIBER_SCHEMA]) await query(s);
+  // one time: pages recorded before clean URLs (/episode-1.html) fold into their clean paths
+  const done = await query(`select 1 from analytics_settings where key = 'clean_urls'`);
+  if (!done.length) {
+    await query(`update analytics_events set path = regexp_replace(path, '\\.html$', '') where path like '%.html'`);
+    await query(`update analytics_presence set path = regexp_replace(path, '\\.html$', '') where path like '%.html'`);
+    await query(`update subscribers set page = regexp_replace(page, '\\.html$', '') where page like '%.html'`);
+    await query(`insert into analytics_heat (page, device, kind, cx, cy, sel, day, count)
+                 select regexp_replace(page, '\\.html$', ''), device, kind, cx, cy, sel, day, count from analytics_heat where page like '%.html'
+                 on conflict (page, device, kind, cx, cy, sel, day) do update set count = analytics_heat.count + excluded.count`);
+    await query(`delete from analytics_heat where page like '%.html'`);
+    await query(`insert into analytics_settings (key, value) values ('clean_urls', 'true'::jsonb) on conflict (key) do nothing`);
+  }
+}
 export const ensure = env => db(env);
 
 /* ---------- request helpers ---------- */
@@ -154,7 +168,8 @@ async function bump(q, env, name) {
 
 /* ---------- collection ---------- */
 const ID = /^[a-z0-9]{12,40}$/;
-const cleanPath = p => { p = String(p || '/').split('?')[0].split('#')[0].slice(0, 300) || '/'; return p.replace(/\/index\.html$/, '/'); };
+// clean URLs: /episode-1.html and /episode-1 are the same page, stored as /episode-1
+const cleanPath = p => { p = String(p || '/').split('?')[0].split('#')[0].slice(0, 300) || '/'; return p.replace(/\/index(\.html)?$/, '/').replace(/\.html$/, '') || '/'; };
 const DEVICES = ['phone', 'tablet', 'desktop'];
 
 export async function collect(req, env) {
