@@ -34,7 +34,8 @@ export async function subscribersData(q, B, url) {
               count(*) filter (where created_at >= $1 and created_at < $2)::int as now,
               count(*) filter (where created_at >= $3 and created_at < $1)::int as prev,
               count(*) filter (where status = 'not_sent')::int as not_sent,
-              count(*) filter (where status = 'pending')::int as pending
+              count(*) filter (where status = 'pending')::int as pending,
+              (select count(distinct visit_id) from analytics_events where kind = 'view' and created_at >= $1 and created_at < $2)::int as visits
        from subscribers`, [B.from, B.to, B.prevFrom]),
     q(`with b as (select generate_series(date_trunc('${unit}', $1::timestamptz at time zone $3), date_trunc('${unit}', $2::timestamptz at time zone $3), interval '1 ${unit}') as t)
        select to_char(b.t, 'YYYY-MM-DD"T"HH24:MI') as t, (select count(*) from subscribers where date_trunc('${unit}', created_at at time zone $3) = b.t)::int as signups from b order by b.t`, [B.from, B.to, B.tz]),
@@ -43,7 +44,7 @@ export async function subscribersData(q, B, url) {
     q(`select email, source, page, status, mailchimp, browser_id, country, region, city, signups, created_at from subscribers
        where $1 = '' or email ilike '%' || $1 || '%' order by created_at desc limit 100 offset $2`, [search, page * 100])
   ]);
-  return { total: c.total, now: c.now, prev: c.prev, notSent: c.not_sent, pending: c.pending, series, sources, pages, rows, page, hourly: B.hourly };
+  return { visits: c.visits, total: c.total, now: c.now, prev: c.prev, notSent: c.not_sent, pending: c.pending, series, sources, pages, rows, page, hourly: B.hourly };
 }
 
 export async function subscribersCsv(q) {

@@ -63,6 +63,7 @@
     subsTotal: 'Everyone who has signed up for the newsletter on this site, all time. One row per email; signing up again counts once.',
     subsNew: 'New emails that signed up in this range, compared with the same stretch just before.',
     subsNotSent: 'Signups we saved but Mailchimp didn’t accept when they came in (usually Mailchimp having a bad moment). Retry sends them again.',
+    subsRate: 'New subscribers divided by visits in the range. A visit is one tab from first page until 30 minutes of quiet.',
     subsPending: 'Waiting for the person to click the confirm link in their email. Only happens with double opt-in turned on in Mailchimp.',
     filtered: 'Requests the filters dropped in the last 30 days. Known bots by browser signature, requests that showed no sign of JavaScript, likely bots (visits with no activity at all), and traffic from excluded IPs.'
   };
@@ -255,19 +256,20 @@
   Views.overview = async (view, _, alive) => {
     const d = await api('overview'); if (!alive()) return;
     const c = d.cur, p = d.prev, B = window.RR_BENCHMARKS;
-    const kpi = (k, v, dl, s, t) => `<section class="card kpi"><span class="k">${k}${tip(t)}</span><span class="v">${v}</span><span class="s">${dl} ${s || ''}</span></section>`;
+    const kpi = (k, v, dl, s, t, bk, bv) => `<section class="card kpi"><span class="k">${k}${tip(t)}</span><span class="v">${v}</span><span class="s">${dl} ${s || ''}</span>${bk ? meter(bk, bv, c.visits) : ''}</section>`;
     view.innerHTML = head('Overview', `How the site <span class="grad-text">is doing</span>`, `${rangeLabel()}, compared with the same stretch of time just before.`) + `
       <div class="kpis">
         ${kpi('Visitors', num(c.visitors), delta(c.visitors, p.visitors), '', 'visitors')}
         ${kpi('Page views', num(c.views), delta(c.views, p.views), '', 'views')}
         ${kpi('Visits', num(c.visits), delta(c.visits, p.visits), '', 'visits')}
-        ${kpi('Bounce rate', pct(c.bounceRate), delta(c.bounceRate, p.bounceRate, true), '', 'bounce')}
-        ${kpi('Average visit', dur(c.avgVisitMs), delta(c.avgVisitMs, p.avgVisitMs), '', 'avgVisit')}
-        ${kpi('Pages per visit', c.pagesPerVisit == null ? '–' : c.pagesPerVisit.toFixed(1), delta(c.pagesPerVisit, p.pagesPerVisit), '', 'ppv')}
-        ${kpi('New vs returning', pct(c.returningShare), delta(c.returningShare, p.returningShare), `<span class="dim">${num(c.new)} new · ${num(c.returning)} returning</span>`, 'returning')}
+        ${kpi('Bounce rate', pct(c.bounceRate), delta(c.bounceRate, p.bounceRate, true), '', 'bounce', 'bounceRate', c.bounceRate)}
+        ${kpi('Average visit', dur(c.avgVisitMs), delta(c.avgVisitMs, p.avgVisitMs), '', 'avgVisit', 'avgVisitMs', c.avgVisitMs)}
+        ${kpi('Pages per visit', c.pagesPerVisit == null ? '–' : c.pagesPerVisit.toFixed(1), delta(c.pagesPerVisit, p.pagesPerVisit), '', 'ppv', 'pagesPerVisit', c.pagesPerVisit)}
+        ${kpi('Returning visits', pct(c.returningShare), delta(c.returningShare, p.returningShare), `<span class="dim">${num(c.new)} new · ${num(c.returning)} returning</span>`, 'returning', 'returningShare', c.returningShare)}
         ${kpi('Actions', num(c.actions), delta(c.actions, p.actions), '', 'actions')}
       </div>
       <div class="grid" style="margin-top:clamp(12px,1.4vw,18px)">
+        ${B ? card('How you compare', benchHtml(c), 'bench') : ''}
         ${card('Visitors and page views', lineChart(d.series, [{ k: 'visitors', label: 'Visitors', color: 'url(#strokeA)', swatch: 'var(--grad)' }, { k: 'views', label: 'Page views', color: '#86d3ff' }], d.hourly), 'chart')}
         <div class="grid g3">
           ${card('Top pages', bars(d.pages, { label: r => esc(pageName(r.k)) }), 'views', '<a class="ad-back" href="#/pages">All pages →</a>')}
@@ -277,29 +279,48 @@
           ${card('Top countries', bars(d.countries, { label: r => `${flag(r.k)} ${esc(country(r.k))}` }), 'countries')}
           ${card('Top actions', bars(d.actions, { href: r => '#/action/' + encodeURIComponent(r.k) }), 'actions', '<a class="ad-back" href="#/actions">All actions →</a>')}
         </div>
-        ${B ? card('How you compare', benchHtml(c), 'bench') : ''}
       </div>`;
     wireChart(view, d.series, [{ k: 'visitors', label: 'Visitors' }, { k: 'views', label: 'Page views' }], d.hourly);
   };
 
+  /* benchmarks: rate a number against admin/analytics/benchmarks.js, and draw where it sits */
+  const RATING = { ok: 'Good', mid: 'OK', low: 'Needs work' };
+  const metric = key => (window.RR_BENCHMARKS && window.RR_BENCHMARKS.metrics.find(m => m.key === key)) || null;
+  const showM = (m, v) => v == null || isNaN(v) ? '–' : m.unit === 'pct' ? pct(v, v < .1 ? 1 : 0) : m.unit === 'ms' ? dur(v) : v.toFixed(1);
+  const rate = (m, v) => {
+    if (!m || v == null || isNaN(v)) return '';
+    const better = (a, b) => m.lowerIsBetter ? a <= b : a >= b;
+    if (better(v, m.goal)) return 'ok';
+    return (m.lowerIsBetter ? v <= m.typical[1] : v >= m.typical[0]) ? 'mid' : 'low';
+  };
+  function meter(key, v, visits) {
+    const m = metric(key); if (!m) return '';
+    const enough = visits == null || visits >= 30, cls = enough ? rate(m, v) : '';
+    const pts = [m.typical[0], m.typical[1], m.goal, v].filter(x => x != null && !isNaN(x));
+    const lo = Math.min(...pts) * .6, hi = Math.max(...pts) * 1.25, x = n => Math.max(0, Math.min(100, (n - lo) / (hi - lo) * 100));
+    // the bar reads left to right from worse to better
+    const pos = n => m.lowerIsBetter ? 100 - x(n) : x(n);
+    const a = pos(m.typical[0]), b = pos(m.typical[1]);
+    return `<span class="bm" title="Typical ${showM(m, m.typical[0])}–${showM(m, m.typical[1])}, goal ${m.lowerIsBetter ? 'under' : 'over'} ${showM(m, m.goal)}">
+        <span class="bm-bar"><i class="band" style="left:${Math.min(a, b)}%;width:${Math.abs(b - a)}%"></i><i class="goal" style="left:${pos(m.goal)}%"></i>${v != null && !isNaN(v) ? `<i class="dot ${cls || 'none'}" style="left:${pos(v)}%"></i>` : ''}</span>
+        <span class="bm-row">${cls ? `<span class="tag ${cls}">${RATING[cls]}</span>` : `<span class="tag">${enough ? 'No data' : 'Too few visits'}</span>`}<span class="bm-t">Typical ${showM(m, m.typical[0])}–${showM(m, m.typical[1])}</span></span></span>`;
+  }
+
+  // a small colored dot for table cells, with the rating in its tooltip
+  const pip = (key, v, n) => { const m = metric(key), cls = m && n >= 30 ? rate(m, v) : ''; return cls ? `<i class="pip ${cls}" title="${RATING[cls]} · typical ${showM(m, m.typical[0])}–${showM(m, m.typical[1])}"></i>` : ''; };
+
   function benchHtml(c) {
     const B = window.RR_BENCHMARKS; if (!B) return '';
     const enough = c.visits >= 30;
-    const val = { bounceRate: c.bounceRate, avgVisitMs: c.avgVisitMs, pagesPerVisit: c.pagesPerVisit, returningShare: c.returningShare, actionRate: c.actionRate, formRate: c.formRate };
-    const show = (m, v) => v == null ? '–' : m.unit === 'pct' ? pct(v) : m.unit === 'ms' ? dur(v) : v.toFixed(1);
-    return `${enough ? '' : `<p class="dim" style="margin:0 0 10px;font-size:14px">Ratings start at 30 visits in the range. This range has ${num(c.visits)}.</p>`}
+    const val = { bounceRate: c.bounceRate, avgVisitMs: c.avgVisitMs, pagesPerVisit: c.pagesPerVisit, returningShare: c.returningShare, actionRate: c.actionRate, formRate: c.formRate, avgScroll: c.avgScroll };
+    const show = showM;
+    return `<p class="dim" style="margin:0 0 10px;font-size:14px">${enough ? '<span class="tag ok">Good</span> at or past the goal · <span class="tag mid">OK</span> inside the typical range · <span class="tag low">Needs work</span> below typical. Tap a row for what it means and what moves it.' : `Ratings start at 30 visits in the range. This range has ${num(c.visits)}, so the ranges below are for context only.`}</p>
       <div class="bench">${B.metrics.map(m => {
         const v = val[m.key];
-        let status = '', cls = '';
-        if (enough && v != null) {
-          const better = (a, b) => m.lowerIsBetter ? a <= b : a >= b;
-          if (better(v, m.goal)) { status = 'At goal'; cls = 'ok'; }
-          else if (m.lowerIsBetter ? v <= m.typical[1] : v >= m.typical[0]) { status = 'Typical'; cls = 'mid'; }
-          else { status = 'Behind typical'; cls = 'low'; }
-        }
+        const cls = enough ? rate(m, v) : '', status = cls ? RATING[cls] : '';
         return `<details><summary><span class="bn">${esc(m.label)}</span><span class="bv">${show(m, v)}</span>
           <span class="br">Typical ${show(m, m.typical[0])}–${show(m, m.typical[1])}</span><span class="br">Goal ${m.lowerIsBetter ? 'under' : 'over'} ${show(m, m.goal)}</span>
-          <span>${status ? `<span class="tag ${cls}">${status}</span>` : '<span class="tag">Not rated</span>'}</span></summary>
+          <span>${status ? `<span class="tag ${cls}">${status}</span>` : '<span class="tag">Not rated yet</span>'}</span></summary>
           <div class="note"><p style="margin:0">${esc(m.means)}</p><p style="margin:0"><b style="color:var(--text)">What moves it:</b> ${esc(m.moves)}</p>
           <p style="margin:0">Sources: ${m.sources.map(s => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a>`).join(', ')}</p></div></details>`;
       }).join('')}</div>
@@ -320,8 +341,8 @@
     table($('#ptable'), [
       { k: 'path', label: 'Page', html: r => `<a href="${esc(r.path)}" target="_blank" rel="noopener">${esc(pageName(r.path))}</a>`, cls: 'wrap-cell' },
       { k: 'views', label: 'Views', fmt: num, tip: 'views' }, { k: 'visitors', label: 'Visitors', fmt: num, tip: 'visitors' },
-      { k: 'avg_active', label: 'Active time', fmt: dur, tip: 'activeTime' }, { k: 'avg_scroll', label: 'Scroll', fmt: v => v == null ? '–' : Math.round(v) + '%', tip: 'scroll' },
-      { k: 'entries', label: 'Entries', fmt: num, tip: 'entries' }, { k: 'bounce', label: 'Bounce', fmt: v => v == null ? '–' : pct(v), sortv: r => r.entries ? r.bounces / r.entries : null, tip: 'bounce', html: r => r.entries ? pct(r.bounces / r.entries) : '–' },
+      { k: 'avg_active', label: 'Active time', fmt: dur, tip: 'activeTime' }, { k: 'avg_scroll', label: 'Scroll', html: r => r.avg_scroll == null ? '–' : `${Math.round(r.avg_scroll)}% ${pip('avgScroll', r.avg_scroll / 100, r.views)}`, tip: 'scroll' },
+      { k: 'entries', label: 'Entries', fmt: num, tip: 'entries' }, { k: 'bounce', label: 'Bounce', fmt: v => v == null ? '–' : pct(v), sortv: r => r.entries ? r.bounces / r.entries : null, tip: 'bounce', html: r => r.entries ? `${pct(r.bounces / r.entries)} ${pip('bounceRate', r.bounces / r.entries, r.entries)}` : '–' },
       { k: 'exits', label: 'Exits', fmt: num, tip: 'exits' }
     ], d.table);
   };
@@ -558,7 +579,7 @@
           <section class="card kpi"><span class="k">Subscribers${tip('subsTotal')}</span><span class="v">${num(d.total)}</span><span class="s">all time</span></section>
           <section class="card kpi"><span class="k">New${tip('subsNew')}</span><span class="v">${num(d.now)}</span><span class="s">${delta(d.now, d.prev)}</span></section>
           <section class="card kpi"><span class="k">Not sent yet${tip('subsNotSent')}</span><span class="v">${num(d.notSent)}</span><span class="s">${d.notSent ? '<button class="btn btn-ghost btn-sm" type="button" id="retryAll">Retry all</button>' : 'All in Mailchimp'}</span></section>
-          <section class="card kpi"><span class="k">Confirming${tip('subsPending')}</span><span class="v">${num(d.pending)}</span></section>
+          <section class="card kpi"><span class="k">Signup rate${tip('subsRate')}</span><span class="v">${d.visits ? pct(d.now / d.visits, 1) : '–'}</span><span class="s">${num(d.now)} of ${num(d.visits)} visits${d.pending ? ` · ${num(d.pending)} confirming` : ''}</span>${meter('formRate', d.visits ? d.now / d.visits : null, d.visits)}</section>
         </div>
         <div class="grid" style="margin-top:clamp(12px,1.4vw,18px)">
           ${card('Signups', lineChart(d.series, [{ k: 'signups', label: 'Signups', color: 'url(#strokeA)', swatch: 'var(--grad)' }], d.hourly))}
@@ -673,7 +694,7 @@
     const spanDays = () => ({ '24h': 1, '7d': 7, '30d': 30, '90d': 90, '12m': 365 })[state.range] || Math.max(1, Math.round((new Date(state.to) - new Date(state.from)) / 864e5) + 1);
     const top = (list, total, n = 8) => list.map(([k, w]) => ({ k, n: Math.round(total * w / list.reduce((a, x) => a + x[1], 0) * (.85 + rnd() * .3)) })).filter(r => r.n > 0).sort((a, b) => b.n - a.n).slice(0, n);
     const totals = f => { const days = spanDays(), visits = Math.round(days * 128 * f), views = Math.round(visits * 2.3), r = .24 + rnd() * .06;
-      return { visitors: Math.round(visits * .82), views, visits, bounceRate: .41 + rnd() * .08, avgVisitMs: 96000 + rnd() * 40000, pagesPerVisit: views / visits, returning: Math.round(visits * r), new: Math.round(visits * (1 - r)), returningShare: r, actions: Math.round(visits * .62), actionRate: .27 + rnd() * .05, formRate: .012 + rnd() * .012 }; };
+      return { visitors: Math.round(visits * .82), views, visits, bounceRate: .41 + rnd() * .08, avgVisitMs: 96000 + rnd() * 40000, pagesPerVisit: views / visits, returning: Math.round(visits * r), new: Math.round(visits * (1 - r)), returningShare: r, actions: Math.round(visits * .62), actionRate: .27 + rnd() * .05, formRate: .012 + rnd() * .012, avgScroll: .44 + rnd() * .14 }; };
     const series = () => { const hourly = state.range === '24h' || (state.range === 'custom' && spanDays() <= 2); const n = hourly ? 24 : spanDays(); const now = Date.now();
       return Array.from({ length: n }, (_, i) => { const t = new Date(now - (n - 1 - i) * (hourly ? 36e5 : 864e5)); const h = t.getHours(), dow = t.getDay();
         const base = hourly ? (h > 7 && h < 23 ? 9 + 6 * Math.sin((h - 7) / 16 * Math.PI) : 2) : 120 * (dow === 0 || dow === 6 ? .8 : 1) * (1 + i / n * .4);
@@ -721,7 +742,7 @@
       subscribers() { reset(); const s = series().map(p => ({ t: p.t, signups: Math.round(p.visitors * (.012 + rnd() * .02)) })); const now = s.reduce((a, p) => a + p.signups, 0);
         const names = ['jules', 'sam.r', 'dana.k', 'mo', 'priya', 'alex.t', 'casey', 'river', 'nico', 'jo.m', 'tasha', 'ben'], hosts = ['gmail.com', 'outlook.com', 'icloud.com', 'yahoo.com', 'proton.me'];
         const rows = Array.from({ length: 40 }, (_, i) => { const c = pick(COUNTRIES), city = (CITIES[c] || CITIES.US)[0]; return { email: names[i % names.length] + (i > 11 ? i : '') + '@' + hosts[i % hosts.length], source: pick([['join-home', 40], ['ep-notify', 25], ['join-episode-1', 20], ['join-store', 10], ['mailchimp import', 5]]), page: pick(PAGES.slice(0, 4)), status: rnd() < .93 ? 'subscribed' : rnd() < .5 ? 'pending' : 'not_sent', mailchimp: 'new via api', browser_id: rnd() < .6 ? 'sample' + (1e9 + i) : null, country: c, region: city[1], city: city[0], signups: 1, created_at: new Date(Date.now() - i * 1.7 * 864e5 * rnd()).toISOString() }; });
-        return { total: 1240 + now, now, prev: Math.round(now * .82), notSent: rows.filter(r => r.status === 'not_sent').length, pending: rows.filter(r => r.status === 'pending').length, series: s, hourly: s[0] && s[0].t.length > 10,
+        return { visits: Math.round(spanDays() * 128), total: 1240 + now, now, prev: Math.round(now * .82), notSent: rows.filter(r => r.status === 'not_sent').length, pending: rows.filter(r => r.status === 'pending').length, series: s, hourly: s[0] && s[0].t.length > 10,
           sources: [{ k: 'join-home', n: Math.round(now * .45) }, { k: 'ep-notify', n: Math.round(now * .27) }, { k: 'join-episode-1', n: Math.round(now * .18) }, { k: 'join-store', n: Math.round(now * .1) }], pages: [{ k: '/', n: Math.round(now * .5) }, { k: '/episode-1.html', n: Math.round(now * .3) }, { k: '/episode-2.html', n: Math.round(now * .12) }, { k: '/store.html', n: Math.round(now * .08) }], rows, page: 0 }; },
       settings() { return { excluded_ips: [{ ip: '203.0.113.7', label: 'Studio wifi', added: new Date().toISOString() }], heat_pages: 'all', filtered: { bot_ua: 412, no_js: 37, likely_bots: 58, excluded_ip: 96 },
         custom: [{ name: 'Played video', n: 380, last: new Date().toISOString() }, { name: 'Newsletter signup', n: 41, last: new Date(Date.now() - 36e5).toISOString() }, { name: 'Added to bag', n: 36, last: new Date(Date.now() - 72e5).toISOString() }],

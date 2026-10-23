@@ -725,6 +725,19 @@ pre.code{margin:0;padding:14px 16px;border-radius:14px;background:var(--ink);bor
 .checks input{accent-color:var(--magenta)}
 .ok-note{color:#5fe3a1!important}
 
+/* benchmarks: a bar from worse (left) to better (right), the typical range shaded, the goal ticked, you as a dot */
+.bm{display:grid;gap:8px;margin-top:4px}
+.bm-bar{position:relative;height:6px;border-radius:3px;background:linear-gradient(90deg,color-mix(in srgb,var(--magenta) 30%,var(--ink-3)),var(--ink-3) 45%,color-mix(in srgb,#5fe3a1 30%,var(--ink-3)))}
+.bm-bar .band{position:absolute;top:0;bottom:0;border-radius:3px;background:color-mix(in srgb,var(--cyan) 38%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cyan) 55%,transparent)}
+.bm-bar .goal{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:#5fe3a1;border-radius:1px}
+.bm-bar .dot{position:absolute;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--text);border:2px solid var(--ink-2);box-shadow:0 0 0 1px var(--text)}
+.bm-bar .dot.ok{background:#5fe3a1;box-shadow:0 0 0 1px #5fe3a1,0 0 10px #5fe3a1}
+.bm-bar .dot.mid{background:var(--cyan);box-shadow:0 0 0 1px var(--cyan)}
+.bm-bar .dot.low{background:var(--magenta);box-shadow:0 0 0 1px var(--magenta),0 0 10px var(--magenta)}
+.bm-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.bm-t{font:500 11px/1.3 var(--f-mono);color:var(--dim);letter-spacing:.04em}
+.pip{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:6px;vertical-align:middle}
+.pip.ok{background:#5fe3a1}.pip.mid{background:var(--cyan)}.pip.low{background:var(--magenta)}
 /* benchmarks */
 .bench{display:grid;gap:0}
 .bench details{border-top:1px solid var(--line)}

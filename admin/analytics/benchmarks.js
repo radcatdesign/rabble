@@ -37,6 +37,15 @@ window.RR_BENCHMARKS = {
       ]
     },
     {
+      key: 'avgScroll', label: 'Scroll depth', unit: 'pct',
+      typical: [0.45, 0.6], goal: 0.6,
+      means: 'How far down a page people get, on average. 100% is the bottom of the page. The first screenful always counts.',
+      moves: 'Strong reasons to keep going below the fold: the episode player, clips, merch, the signup. Long empty stretches and slow images push it down.',
+      sources: [
+        { name: 'Contentsquare 2024 benchmark: average scroll rate near 50% on mobile and desktop', url: 'https://csquad.contentsquare.com/benchmark24-explorer' }
+      ]
+    },
+    {
       key: 'returningShare', label: 'Returning visitors', unit: 'pct',
       typical: [0.25, 0.5], goal: 0.4,
       means: 'The share of visits from browsers that came before. Visitors without a browser ID (privacy signals, EU and UK) always count as new, so this reads a bit low.',

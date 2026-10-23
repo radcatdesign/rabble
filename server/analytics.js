@@ -351,12 +351,13 @@ async function totals(q, from, to) {
            (select count(*) filter (where ret) from gv)::int as ret_visits,
            (select count(*) from gev where kind = 'action')::int as actions,
            (select count(*) filter (where actions > 0) from gv)::int as action_visits,
-           (select count(*) filter (where forms > 0) from gv)::int as form_visits`, [from, to]);
+           (select count(*) filter (where forms > 0) from gv)::int as form_visits,
+           (select avg(m) from (select max(scroll_pct) as m from gev where kind = 'leave' and view_id is not null group by view_id) x)::float as avg_scroll`, [from, to]);
   const n = x => +x || 0;
   return { visitors: n(t.visitors), views: n(t.views), visits: n(t.visits), bounceRate: t.visits ? n(t.bounces) / n(t.visits) : null,
            avgVisitMs: t.visits ? n(t.active) / n(t.visits) : null, pagesPerVisit: t.visits ? n(t.views) / n(t.visits) : null,
            returning: n(t.ret_visits), new: n(t.visits) - n(t.ret_visits), returningShare: t.visits ? n(t.ret_visits) / n(t.visits) : null,
-           actions: n(t.actions), actionRate: t.visits ? n(t.action_visits) / n(t.visits) : null, formRate: t.visits ? n(t.form_visits) / n(t.visits) : null };
+           actions: n(t.actions), actionRate: t.visits ? n(t.action_visits) / n(t.visits) : null, formRate: t.visits ? n(t.form_visits) / n(t.visits) : null, avgScroll: t.avg_scroll == null ? null : t.avg_scroll / 100 };
 }
 const top = (q, sql, params) => q(sql, params).then(rows => rows.map(r => ({ ...r, n: +r.n, u: r.u == null ? undefined : +r.u })));
 

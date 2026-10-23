@@ -65,6 +65,10 @@ window.analytics.track('Booked a call', 'Footer button');
 
 The first value is the action name (it groups the action in the dashboard), the second is an optional label. Call it anywhere after the page loads. It never throws, and it does nothing in a browser that isn't counted.
 
+## Benchmarks
+
+Bounce rate, average visit, pages per visit, returning visits, scroll depth and the signup rate are each rated against published figures in `admin/analytics/benchmarks.js`. **Good** means at or past the goal, **OK** means inside the typical range, and **Needs work** means below it. Each rated number shows a bar (worse on the left, better on the right) with the typical range shaded, the goal ticked and your number as a dot. Ratings start at 30 visits in the range. The Pages table marks each page's scroll depth and bounce rate with a colored dot once a page has 30 views or entries. Edit the ranges, goals and sources in that one file.
+
 ## Settings
 
 - **Sample data:** fills every page with made-up numbers. Nothing is saved while it's on.
