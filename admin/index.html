@@ -57,6 +57,13 @@ img{max-width:100%;display:block}
 a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit}
 ::selection{background:var(--magenta);color:var(--white)}
+/* scrollbar: a thin glass sliver over the page, no track */
+html{scrollbar-width:thin;scrollbar-color:rgba(244,240,251,.22) transparent}
+::-webkit-scrollbar{width:6px;height:6px;background:transparent}
+::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(244,240,251,.2);border-radius:6px;border:1px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#ff2d95,#b44cff,#2f86ff);background-clip:padding-box}
+
 :focus-visible{outline:2px solid var(--cyan);outline-offset:4px;border-radius:8px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .wrap{width:100%;max-width:1440px;margin-inline:auto;padding-inline:var(--gutter)}
