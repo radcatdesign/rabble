@@ -3,13 +3,15 @@
    to the audience's public signup endpoint, the same one the hosted form uses.
 
    Optional env: MAILCHIMP_API_KEY (xxxx-us16), MAILCHIMP_LIST_ID (default below),
-                 MAILCHIMP_DOUBLE_OPTIN ("true" sends a confirm email first), MAILCHIMP_FORM_URL */
+                 MAILCHIMP_DOUBLE_OPTIN (on unless set to "false": new contacts start as pending and get Mailchimp's confirm email), MAILCHIMP_FORM_URL */
 import { HttpError } from './store.js';
 
 // the public endpoint that answers JSON when given a callback name (post-json 404s for this audience)
 const FORM = 'https://mc.us16.list-manage.com/subscribe/post?u=ce1b58add8c1efd13b6b9c915&id=b9fe5c7621';
 const LIST = 'b9fe5c7621';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+// double opt-in is the default: a confirm email goes out and only people who click it become subscribed
+export const doubleOptIn = env => String(env.MAILCHIMP_DOUBLE_OPTIN || '').toLowerCase() !== 'false';
 const clean = s => String(s || '').replace(/<[^>]+>/g, '').replace(/^\d+ - /, '').trim();
 
 export async function subscribe(env, email, source = 'website') {
@@ -23,10 +25,10 @@ export async function subscribe(env, email, source = 'website') {
     const res = await fetch(`https://${dc}.api.mailchimp.com/3.0/lists/${env.MAILCHIMP_LIST_ID || LIST}/members`, {
       method: 'POST',
       headers: { authorization: 'Basic ' + btoa('rr:' + env.MAILCHIMP_API_KEY), 'content-type': 'application/json' },
-      body: JSON.stringify({ email_address: email, status: String(env.MAILCHIMP_DOUBLE_OPTIN) === 'true' ? 'pending' : 'subscribed', tags: ['website', tag] })
+      body: JSON.stringify({ email_address: email, status: doubleOptIn(env) ? 'pending' : 'subscribed', tags: ['website', tag] })
     });
     const body = await res.json().catch(() => ({}));
-    if (res.ok) return { status: 'new', via: 'api' };
+    if (res.ok) return { status: doubleOptIn(env) ? 'pending' : 'new', via: 'api' };
     if (body.title === 'Member Exists') return { status: 'already', via: 'api' };
     if (res.status === 400) throw new HttpError(400, clean(body.detail) || 'Mailchimp turned that one down.');
     throw new HttpError(502, 'Mailchimp is not answering right now');
@@ -39,7 +41,7 @@ export async function subscribe(env, email, source = 'website') {
   let data = null;
   try { data = JSON.parse(m ? m[1] : text); } catch (_) {}
   if (!data) { const e = new HttpError(502, 'Mailchimp is not answering right now'); e.detail = `${res.status} ${res.headers.get('content-type')} ${text.slice(0, 300)}`; throw e; }
-  if (data.result === 'success') return { status: 'new', via: 'form' };
+  if (data.result === 'success') return { status: /confirm/i.test(data.msg || '') ? 'pending' : 'new', via: 'form' };
   const msg = clean(data.msg);
   if (/already subscribed|is already a list member/i.test(msg)) return { status: 'already', via: 'form' };
   if (/too many/i.test(msg)) throw new HttpError(429, 'Too many tries from this address. Give it a few minutes.');

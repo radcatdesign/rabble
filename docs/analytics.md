@@ -94,6 +94,12 @@ Every newsletter signup on the site is saved in our own `subscribers` table (sam
 - **Download CSV** exports the whole list. **Remove** deletes one person from our table only; it doesn't unsubscribe them in Mailchimp.
 - Unsubscribes happen in Mailchimp. Run the import again to bring their status across.
 
+## Signup spam
+
+New signups get Mailchimp's confirm email first (double opt-in) and show as **Confirming** until the person clicks it. Set `MAILCHIMP_DOUBLE_OPTIN=false` to turn that off. Run **Import from Mailchimp** to bring confirmed statuses across.
+
+Before anything reaches Mailchimp, `/api/subscribe` holds back likely bots: a hidden form field that people never see was filled in, the form was sent under 2.5 seconds after the page opened, the request didn't come from the site, the browser is a known bot, or one connection already signed up 3 addresses in the past day (checked with a scrambled IP, cleared after 30 days). Held signups get a normal-looking reply, aren't saved, and show as **spam blocked** on the Subscribers page. Rows that share a connection get an "N× same connection" tag.
+
 ## Database tables
 
 `analytics_events`, `analytics_presence`, `analytics_heat`, `analytics_daily`, `analytics_salts`, `analytics_settings`, `analytics_shots`, `analytics_people` (browser ID to email, set when someone signs up for the newsletter from a browser with an ID), `analytics_counters` (filter counts) and `subscribers` (the newsletter list). Schema: top of `server/analytics.js`.

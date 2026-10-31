@@ -64,6 +64,7 @@
     subsNew: 'New emails that signed up in this range, compared with the same stretch just before.',
     subsNotSent: 'Signups we saved but Mailchimp didn’t accept when they came in (usually Mailchimp having a bad moment). Retry sends them again.',
     subsRate: 'New subscribers divided by visits in the range. A visit is one tab from first page until 30 minutes of quiet.',
+    subsSpam: 'Signups held back as likely bots: a hidden field filled in, sent faster than a person can type, not sent from the site, or more than 3 from one connection in a day. They never reach Mailchimp or this list.',
     subsPending: 'Waiting for the person to click the confirm link in their email. Only happens with double opt-in turned on in Mailchimp.',
     filtered: 'Requests the filters dropped in the last 30 days. Known bots by browser signature, requests that showed no sign of JavaScript, likely bots (visits with no activity at all), and traffic from excluded IPs.'
   };
@@ -579,7 +580,7 @@
           <section class="card kpi"><span class="k">Subscribers${tip('subsTotal')}</span><span class="v">${num(d.total)}</span><span class="s">all time</span></section>
           <section class="card kpi"><span class="k">New${tip('subsNew')}</span><span class="v">${num(d.now)}</span><span class="s">${delta(d.now, d.prev)}</span></section>
           <section class="card kpi"><span class="k">Not sent yet${tip('subsNotSent')}</span><span class="v">${num(d.notSent)}</span><span class="s">${d.notSent ? '<button class="btn btn-ghost btn-sm" type="button" id="retryAll">Retry all</button>' : 'All in Mailchimp'}</span></section>
-          <section class="card kpi"><span class="k">Signup rate${tip('subsRate')}</span><span class="v">${d.visits ? pct(d.now / d.visits, 1) : '–'}</span><span class="s">${num(d.now)} of ${num(d.visits)} visits${d.pending ? ` · ${num(d.pending)} confirming` : ''}</span>${meter('formRate', d.visits ? d.now / d.visits : null, d.visits)}</section>
+          <section class="card kpi"><span class="k">Signup rate${tip('subsRate')}</span><span class="v">${d.visits ? pct(d.now / d.visits, 1) : '–'}</span><span class="s">${num(d.now)} of ${num(d.visits)} visits${d.pending ? ` · ${num(d.pending)} confirming` : ''}${d.blocked ? ` · ${num(d.blocked)} spam blocked` : ''}</span>${meter('formRate', d.visits ? d.now / d.visits : null, d.visits)}</section>
         </div>
         <div class="grid" style="margin-top:clamp(12px,1.4vw,18px)">
           ${card('Signups', lineChart(d.series, [{ k: 'signups', label: 'Signups', color: 'url(#strokeA)', swatch: 'var(--grad)' }], d.hourly))}
@@ -592,7 +593,7 @@
         </div>`;
       wireChart(view, d.series, [{ k: 'signups', label: 'Signups' }], d.hourly);
       table($('#subTable'), [
-        { k: 'email', label: 'Email', html: r => r.browser_id ? `<a href="#/visitor/${esc(r.browser_id)}">${esc(r.email)}</a>` : esc(r.email), cls: 'wrap-cell' },
+        { k: 'email', label: 'Email', html: r => (r.browser_id ? `<a href="#/visitor/${esc(r.browser_id)}">${esc(r.email)}</a>` : esc(r.email)) + (r.same_conn > 1 ? ` <span class="tag low" title="${r.same_conn} signups from the same connection">${r.same_conn}× same connection</span>` : ''), cls: 'wrap-cell' },
         { k: 'created_at', label: 'Joined', fmt: when, sortv: r => +new Date(r.created_at) },
         { k: 'source', label: 'From', fmt: v => v || 'website' }, { k: 'page', label: 'Page', fmt: v => v ? pageName(v) : '–' },
         { k: 'place', label: 'Where', html: r => `${flag(r.country)} ${esc([r.city, r.region].filter(Boolean).join(', ') || country(r.country))}`, sortv: r => r.country || '' },
@@ -654,11 +655,25 @@
           <h3 style="margin-top:8px">Export</h3>
           <div class="row"><label class="pill-select"><span class="sr-only">Table</span><select id="exT"><option value="events">Events</option><option value="daily">Daily totals</option><option value="heat">Heatmap cells</option><option value="presence">Live presence</option></select></label>
           <button class="btn btn-ghost btn-sm" type="button" id="exGo">Download CSV</button></div><p>Uses the date range at the top.</p></section>
+        <section class="card set" style="grid-column:1/-1"><h3>Merch from Printful</h3>
+          <p>The shop reads one Printful store and refreshes about every minute. If a change in Printful doesn't show up, check that you edited a product in the store marked <b style="color:var(--text)">Shop reads this</b>.</p>
+          <div id="merchInfo"><p class="dim">Checking Printful…</p></div></section>
         <section class="card set"><h3>Delete a visitor</h3>
           <p>Removes every event, live record and linked email for one browser ID. This can't be undone.</p>
           <form class="row" id="delForm"><input class="ad-input" name="id" placeholder="Browser ID" aria-label="Browser ID" pattern="[a-z0-9]{12,40}" required><button class="btn btn-ghost btn-sm" type="submit">Delete</button></form>
           <p class="form-note" id="delNote" role="status"></p></section>
       </div>`;
+    (async () => {
+      const el = $('#merchInfo'); if (!el) return;
+      if (state.sample) { el.innerHTML = '<p class="dim">Turn off sample data to check the real store.</p>'; return; }
+      try {
+        const m = await api('merch');
+        const stores = (m.stores || []).map(st => `<li><span class="name">${esc(st.name)} <span class="dim mono">${esc(st.type)} · ${esc(st.id)}</span></span>${String(st.id) === String(m.using) || (m.stores.length === 1) ? '<span class="tag ok">Shop reads this</span>' : '<span class="tag">Not used</span>'}</li>`).join('');
+        const prods = (m.products || []).map(pr => `<tr><td class="wrap-cell">${esc(pr.name)}</td><td>${num(pr.synced)} / ${num(pr.variants)}</td><td>${pr.hidden ? '<span class="tag">Hidden</span>' : '<span class="tag ok">On the shop</span>'}</td></tr>`).join('');
+        el.innerHTML = (m.error ? `<p class="form-note err">${esc(m.error)}</p>` : '') + (stores ? `<ul class="bars">${stores}</ul>` : '') +
+          (prods ? `<div class="tbl-wrap" style="margin-top:12px"><table class="tbl"><thead><tr><th>Product in Printful</th><th>Synced options</th><th>Status</th></tr></thead><tbody>${prods}</tbody></table></div>` : '');
+      } catch (e) { el.innerHTML = `<p class="form-note err">${esc(e.message)}</p>`; }
+    })();
     const save = async body => { if (state.sample) { alert('Sample data is on, so nothing is saved.'); return; } await api('settings', {}, body); route(); };
     $('#sw').addEventListener('change', e => { state.sample = e.target.checked; LS.set('rr-a-sample', state.sample ? '1' : null); shell(); location.hash = '#/settings'; });
     const ca = $('#countAgain'); if (ca) ca.addEventListener('click', () => { LS.set('rr-staff', null); route(); });
@@ -742,7 +757,7 @@
       subscribers() { reset(); const s = series().map(p => ({ t: p.t, signups: Math.round(p.visitors * (.012 + rnd() * .02)) })); const now = s.reduce((a, p) => a + p.signups, 0);
         const names = ['jules', 'sam.r', 'dana.k', 'mo', 'priya', 'alex.t', 'casey', 'river', 'nico', 'jo.m', 'tasha', 'ben'], hosts = ['gmail.com', 'outlook.com', 'icloud.com', 'yahoo.com', 'proton.me'];
         const rows = Array.from({ length: 40 }, (_, i) => { const c = pick(COUNTRIES), city = (CITIES[c] || CITIES.US)[0]; return { email: names[i % names.length] + (i > 11 ? i : '') + '@' + hosts[i % hosts.length], source: pick([['join-home', 40], ['ep-notify', 25], ['join-episode-1', 20], ['join-store', 10], ['mailchimp import', 5]]), page: pick(PAGES.slice(0, 4)), status: rnd() < .93 ? 'subscribed' : rnd() < .5 ? 'pending' : 'not_sent', mailchimp: 'new via api', browser_id: rnd() < .6 ? 'sample' + (1e9 + i) : null, country: c, region: city[1], city: city[0], signups: 1, created_at: new Date(Date.now() - i * 1.7 * 864e5 * rnd()).toISOString() }; });
-        return { visits: Math.round(spanDays() * 128), total: 1240 + now, now, prev: Math.round(now * .82), notSent: rows.filter(r => r.status === 'not_sent').length, pending: rows.filter(r => r.status === 'pending').length, series: s, hourly: s[0] && s[0].t.length > 10,
+        return { visits: Math.round(spanDays() * 128), total: 1240 + now, now, prev: Math.round(now * .82), notSent: rows.filter(r => r.status === 'not_sent').length, pending: rows.filter(r => r.status === 'pending').length, blocked: 14, series: s, hourly: s[0] && s[0].t.length > 10,
           sources: [{ k: 'join-home', n: Math.round(now * .45) }, { k: 'ep-notify', n: Math.round(now * .27) }, { k: 'join-episode-1', n: Math.round(now * .18) }, { k: 'join-store', n: Math.round(now * .1) }], pages: [{ k: '/', n: Math.round(now * .5) }, { k: '/episode-1', n: Math.round(now * .3) }, { k: '/episode-2', n: Math.round(now * .12) }, { k: '/store', n: Math.round(now * .08) }], rows, page: 0 }; },
       settings() { return { excluded_ips: [{ ip: '203.0.113.7', label: 'Studio wifi', added: new Date().toISOString() }], heat_pages: 'all', filtered: { bot_ua: 412, no_js: 37, likely_bots: 58, excluded_ip: 96 },
         custom: [{ name: 'Played video', n: 380, last: new Date().toISOString() }, { name: 'Newsletter signup', n: 41, last: new Date(Date.now() - 36e5).toISOString() }, { name: 'Added to bag', n: 36, last: new Date(Date.now() - 72e5).toISOString() }],

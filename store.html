@@ -87,6 +87,7 @@ html{scrollbar-width:thin;scrollbar-color:rgba(244,240,251,.22) transparent}
 ::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#ff2d95,#b44cff,#2f86ff);background-clip:padding-box}
 
 :focus-visible{outline:2px solid var(--cyan);outline-offset:4px;border-radius:8px}
+.hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;opacity:0;pointer-events:none}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .wrap{width:100%;max-width:1440px;margin-inline:auto;padding-inline:var(--gutter)}
 [hidden]{display:none!important}
@@ -781,6 +782,7 @@ main{position:relative;z-index:1}
         </div>
         <div class="join-side">
           <form class="join-form" id="joinForm" novalidate>
+            <input class="hp" type="text" name="rr_trap" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore aria-hidden="true">
             <label for="email">Email address</label>
             <div class="field">
               <input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" required>
@@ -1150,8 +1152,9 @@ dispatchEvent(new Event('three-ready'));
   }));
 
   /* ---------- signup forms: straight into the Mailchimp list ---------- */
-  async function subscribe(email, source) {
-    const res = await fetch(`${SITE_API}/subscribe`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, source, bid: window.analytics && window.analytics.browserId ? window.analytics.browserId() : null }) });
+  const bootAt = Date.now();
+  async function subscribe(email, source, hp) {
+    const res = await fetch(`${SITE_API}/subscribe`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, source, company: hp || '', t: Date.now() - bootAt, bid: window.analytics && window.analytics.browserId ? window.analytics.browserId() : null }) });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'network');
     track('Newsletter signup', source);
@@ -1166,8 +1169,9 @@ dispatchEvent(new Event('three-ready'));
       if (!input.value.trim() || !input.checkValidity()) { note.textContent = words.bad; note.classList.add('err'); input.focus(); return; }
       const btn = $('button[type="submit"]', form);
       btn.disabled = true; note.textContent = 'Adding you…';
-      subscribe(input.value.trim(), source)
-        .then(kind => { note.textContent = kind === 'already' ? "You're already on the list. Good taste." : words.ok; note.classList.add('ok'); form.reset(); })
+      const hp = form.querySelector('.hp');
+      subscribe(input.value.trim(), source, hp && hp.value)
+        .then(kind => { note.textContent = kind === 'already' ? "You're already on the list. Good taste." : kind === 'pending' ? words.confirm : words.ok; note.classList.add('ok'); form.reset(); })
         .catch(err => {
           note.innerHTML = err.message && err.message !== 'network' && !/Failed to fetch/i.test(err.message)
             ? err.message.replace(/[<>&]/g, '')
@@ -1177,8 +1181,8 @@ dispatchEvent(new Event('three-ready'));
         .finally(() => { btn.disabled = false; });
     });
   }
-  $$('.ep-notify').forEach(f => wireSignup(f, $('input', f), $('.ep-note', f), { bad: 'That email looks off. Try again.', ok: "You're on the list. We'll ping you when it drops." }, 'episode-2-notify'));
-  wireSignup($('#joinForm'), $('#email'), $('#formNote'), { bad: 'That email address looks off. Check it and try again.', ok: "You're in. Welcome to the rabble." }, page === 'store' ? 'merch' : page);
+  $$('.ep-notify').forEach(f => wireSignup(f, $('input', f), $('.ep-note', f), { bad: 'That email looks off. Try again.', ok: "You're on the list. We'll ping you when it drops.", confirm: 'Almost there. Check your inbox and tap the confirm link.' }, 'episode-2-notify'));
+  wireSignup($('#joinForm'), $('#email'), $('#formNote'), { bad: 'That email address looks off. Check it and try again.', ok: "You're in. Welcome to the rabble.", confirm: 'Almost in. Check your inbox and tap the confirm link.' }, page === 'store' ? 'merch' : page);
 
   /* ---------- footer sign fits its width ---------- */
   const word = $('#marqueeWord');

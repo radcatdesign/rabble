@@ -17,7 +17,7 @@ We run our own analytics on this website to understand which pages and episodes 
 - a **visit ID** in session storage, which disappears when you close the tab and changes after 30 minutes without activity;
 - a **browser ID** in local storage, kept for up to 13 months, so we can tell when someone comes back. If you sign up for our newsletter from this browser, we link your email address to this browser ID so we can see which episodes our subscribers enjoy.
 
-**Newsletter signups.** When you join our newsletter we keep your email address, the form and page you signed up on, your approximate location and the date, and we send your address to Mailchimp, which delivers the emails. You can unsubscribe from any email, and ask us at [hello@rabbleandrouse.com] to delete your address from our records.
+**Newsletter signups.** When you join our newsletter we keep your email address, the form and page you signed up on, your approximate location and the date, and we send your address to Mailchimp, which delivers the emails. Mailchimp first sends you a confirmation email, and you're only subscribed once you click it. To keep bots off the list we also keep a scrambled form of your connection's IP address (never the address itself) for 30 days, so one connection can't sign up dozens of addresses. You can unsubscribe from any email, and ask us at [hello@rabbleandrouse.com] to delete your address from our records.
 
 **When we don't set a browser ID.** We don't set the browser ID, and we keep no history for your browser, if your browser sends a Global Privacy Control or Do Not Track signal, or if you're in the European Union, the European Economic Area, the United Kingdom or Switzerland. Your visits still count in our totals through the daily method above.
 

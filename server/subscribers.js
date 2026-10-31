@@ -1,29 +1,31 @@
 /* Our own copy of every newsletter signup, in the site's Postgres (the same Neon database as analytics).
    Mailchimp still sends the emails; this keeps the list in our hands, records where each signup came from,
    and catches people even when Mailchimp is having a bad day (they show as "Not sent yet" with a retry). */
-import { subscribe } from './newsletter.js';
+import { subscribe, doubleOptIn } from './newsletter.js';
 
 export const SUBSCRIBER_SCHEMA = [
   `create table if not exists subscribers (
     email text primary key, source text, page text, status text not null default 'subscribed', mailchimp text,
-    browser_id text, country text, region text, city text, signups integer not null default 1,
+    browser_id text, country text, region text, city text, ip_hash text, signups integer not null default 1,
     created_at timestamptz not null default now(), updated_at timestamptz not null default now())`,
-  `create index if not exists subscribers_created on subscribers (created_at)`
+  `create index if not exists subscribers_created on subscribers (created_at)`,
+  `alter table subscribers add column if not exists ip_hash text`,
+  `create table if not exists signup_blocks (id bigserial primary key, reason text not null, ip_hash text, email_domain text, created_at timestamptz not null default now())`
 ];
 
 const clip = (s, n) => (s == null || s === '' ? null : String(s).slice(0, n));
 const header = (req, k) => { const v = req.headers.get(k); try { return v ? decodeURIComponent(v) : null; } catch (_) { return v; } };
 
 // called by /api/subscribe for every signup, whatever Mailchimp said
-export async function saveSubscriber(q, req, { email, source, browserId, mailchimp, status }) {
+export async function saveSubscriber(q, req, { email, source, browserId, mailchimp, status, ipHash }) {
   let page = null;
   try { page = new URL(req.headers.get('referer') || '').pathname.replace(/\/index(\.html)?$/, '/').replace(/\.html$/, '') || '/'; } catch (_) {}
-  await q(`insert into subscribers (email, source, page, status, mailchimp, browser_id, country, region, city)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+  await q(`insert into subscribers (email, source, page, status, mailchimp, browser_id, country, region, city, ip_hash)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
            on conflict (email) do update set signups = subscribers.signups + 1, updated_at = now(),
              status = case when excluded.status = 'not_sent' and subscribers.status <> 'not_sent' then subscribers.status else excluded.status end,
              mailchimp = excluded.mailchimp, browser_id = coalesce(excluded.browser_id, subscribers.browser_id)`,
-    [email, clip(source, 40), clip(page, 200), status, clip(mailchimp, 200), browserId, clip(header(req, 'x-vercel-ip-country'), 2), clip(header(req, 'x-vercel-ip-country-region'), 40), clip(header(req, 'x-vercel-ip-city'), 80)]);
+    [email, clip(source, 40), clip(page, 200), status, clip(mailchimp, 200), browserId, clip(header(req, 'x-vercel-ip-country'), 2), clip(header(req, 'x-vercel-ip-country-region'), 40), clip(header(req, 'x-vercel-ip-city'), 80), ipHash || null]);
 }
 
 export async function subscribersData(q, B, url) {
@@ -35,16 +37,17 @@ export async function subscribersData(q, B, url) {
               count(*) filter (where created_at >= $3 and created_at < $1)::int as prev,
               count(*) filter (where status = 'not_sent')::int as not_sent,
               count(*) filter (where status = 'pending')::int as pending,
-              (select count(distinct visit_id) from analytics_events where kind = 'view' and created_at >= $1 and created_at < $2)::int as visits
+              (select count(distinct visit_id) from analytics_events where kind = 'view' and created_at >= $1 and created_at < $2)::int as visits,
+              (select count(*) from signup_blocks where created_at >= $1 and created_at < $2)::int as blocked
        from subscribers`, [B.from, B.to, B.prevFrom]),
     q(`with b as (select generate_series(date_trunc('${unit}', $1::timestamptz at time zone $3), date_trunc('${unit}', $2::timestamptz at time zone $3), interval '1 ${unit}') as t)
        select to_char(b.t, 'YYYY-MM-DD"T"HH24:MI') as t, (select count(*) from subscribers where date_trunc('${unit}', created_at at time zone $3) = b.t)::int as signups from b order by b.t`, [B.from, B.to, B.tz]),
     q(`select coalesce(source, 'website') as k, count(*)::int as n from subscribers where created_at >= $1 and created_at < $2 group by 1 order by n desc limit 12`, [B.from, B.to]),
     q(`select coalesce(page, '/') as k, count(*)::int as n from subscribers where created_at >= $1 and created_at < $2 group by 1 order by n desc limit 12`, [B.from, B.to]),
-    q(`select email, source, page, status, mailchimp, browser_id, country, region, city, signups, created_at from subscribers
+    q(`select email, source, page, status, mailchimp, browser_id, country, region, city, signups, created_at, ip_hash, (select count(*) from subscribers s2 where s2.ip_hash = subscribers.ip_hash and subscribers.ip_hash is not null)::int as same_conn from subscribers
        where $1 = '' or email ilike '%' || $1 || '%' order by created_at desc limit 100 offset $2`, [search, page * 100])
   ]);
-  return { visits: c.visits, total: c.total, now: c.now, prev: c.prev, notSent: c.not_sent, pending: c.pending, series, sources, pages, rows, page, hourly: B.hourly };
+  return { visits: c.visits, blocked: c.blocked, total: c.total, now: c.now, prev: c.prev, notSent: c.not_sent, pending: c.pending, series, sources, pages, rows, page, hourly: B.hourly };
 }
 
 export async function subscribersCsv(q) {
@@ -64,7 +67,7 @@ export async function subscribersAction(q, env, body) {
     for (const s of list) {
       try {
         const r = await subscribe(env, s.email, s.source || 'website');
-        await q(`update subscribers set status = $2, mailchimp = $3, updated_at = now() where email = $1`, [s.email, String(env.MAILCHIMP_DOUBLE_OPTIN) === 'true' ? 'pending' : 'subscribed', r.status + ' via ' + r.via]);
+        await q(`update subscribers set status = $2, mailchimp = $3, updated_at = now() where email = $1`, [s.email, doubleOptIn(env) ? 'pending' : 'subscribed', r.status + ' via ' + r.via]);
         ok++;
       } catch (e) {
         await q(`update subscribers set mailchimp = $2, updated_at = now() where email = $1`, [s.email, 'failed: ' + String(e.message).slice(0, 160)]);

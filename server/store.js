@@ -92,6 +92,8 @@ export async function listProducts(env) {
       if (!v.image) v.image = (variants.find(o => o.image && o.color === v.color && o.catalog !== o.image) || {}).image || p.thumbnail_url || v.catalog;
       delete v.catalog;
     }
+    // one look for every option: use the main image picked in Printful, so a new mockup there shows up here
+    if (p.thumbnail_url && new Set(variants.map(v => v.image)).size <= 1) variants.forEach(v => { v.image = p.thumbnail_url; });
     return { id: p.id, name: p.name, image: p.thumbnail_url || (variants[0] && variants[0].image) || '', variants };
   }).filter(p => p.variants.length);
 }
@@ -99,14 +101,17 @@ export async function listProducts(env) {
 /* Printful often holds the same product more than once (one listing per color or a re-sync); show one card each */
 export function mergeByName(products) {
   const out = new Map();
-  for (const p of products) {
+  // newest listing first (Printful ids only go up), so edits to a re-made product win over the old copy
+  const order = new Map(products.map((p, i) => [p.id, i]));
+  for (const p of [...products].sort((a, b) => b.id - a.id)) {
     const key = p.name.trim().toLowerCase().replace(/\s+/g, ' ');
     const have = out.get(key);
     if (!have) { out.set(key, { ...p, variants: [...p.variants] }); continue; }
     const seen = new Set(have.variants.map(v => `${v.color}|${v.size}`));
     for (const v of p.variants) if (!seen.has(`${v.color}|${v.size}`)) { have.variants.push(v); seen.add(`${v.color}|${v.size}`); }
   }
-  return [...out.values()];
+  // keep the shop's own order (as set in Printful), placed by each product's first appearance
+  return [...out.values()].sort((a, b) => Math.min(...products.filter(p => p.name.trim().toLowerCase().replace(/\s+/g, ' ') === a.name.trim().toLowerCase().replace(/\s+/g, ' ')).map(p => order.get(p.id))) - Math.min(...products.filter(p => p.name.trim().toLowerCase().replace(/\s+/g, ' ') === b.name.trim().toLowerCase().replace(/\s+/g, ' ')).map(p => order.get(p.id))));
 }
 
 /* ---------- checkout: prices come from Printful, never from the browser ---------- */
@@ -227,4 +232,16 @@ export async function fulfil(env, session) {
     })
   });
   return { order: order && order.id, confirmed: confirm };
+}
+
+/* for the team: which Printful store the site reads, what else the token can see, and what's in it */
+export async function storeInfo(env) {
+  if (!env.PRINTFUL_TOKEN) return { error: 'PRINTFUL_TOKEN is not set.' };
+  const res = await fetch(PF + '/stores', { headers: { authorization: `Bearer ${env.PRINTFUL_TOKEN}` } });
+  const body = await res.json().catch(() => ({}));
+  const stores = Array.isArray(body.result) ? body.result.map(s => ({ id: s.id, name: s.name, type: s.type })) : [];
+  let using = env.PRINTFUL_STORE_ID || apiStoreId || null, list = [];
+  try { list = await printful(env, '/store/products?limit=100'); using = env.PRINTFUL_STORE_ID || apiStoreId || (stores.length === 1 ? stores[0].id : using); }
+  catch (e) { return { stores, using, error: e.message }; }
+  return { stores, using: using && String(using), products: list.map(p => ({ id: p.id, name: p.name, variants: p.variants, synced: p.synced, hidden: !!p.is_ignored, image: p.thumbnail_url })) };
 }

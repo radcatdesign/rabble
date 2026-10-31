@@ -4,6 +4,7 @@
         CRON_SECRET (Vercel cron), ANALYTICS_TZ (default America/New_York), ANALYTICS_ORIGINS (extra hosts, comma separated)
    Nothing here stores a raw IP or user agent, except IPs the team adds to its own exclusion list. */
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { storeInfo } from './store.js';
 import { SUBSCRIBER_SCHEMA, saveSubscriber, subscribersData, subscribersCsv, subscribersAction } from './subscribers.js';
 
 export const RETENTION_DAYS = 400;
@@ -567,6 +568,8 @@ export async function daily(q, env) {
                from gv group by 1, 2) v on v.path = p.path and v.source = p.source`, [tz]);
   const [{ n }] = await q(`with d as (delete from analytics_events where created_at < now() - interval '${RETENTION_DAYS} days' returning 1) select count(*)::int as n from d`);
   await q(`delete from analytics_counters where day < now() - interval '${RETENTION_DAYS} days'`);
+  await q(`update subscribers set ip_hash = null where ip_hash is not null and created_at < now() - interval '30 days'`).catch(() => {});
+  await q(`delete from signup_blocks where created_at < now() - interval '90 days'`).catch(() => {});
   return { ok: true, deleted: n };
 }
 
@@ -608,6 +611,7 @@ export async function handle(req, env) {
         return json({ ...(await subscribersData(q, B, url)), done });
       }
       case 'subscribers-export': return await subscribersCsv(q);
+      case 'merch': return json(await storeInfo(env));
       case 'settings':
         if (req.method === 'POST') {
           const body = await req.json().catch(() => ({}));
@@ -652,4 +656,29 @@ export async function recordSignup(env, req, info) {
     await saveSubscriber(q, req, { ...info, browserId: allowed ? info.browserId : null });
     return true;
   } catch (e) { if (env.ANALYTICS_DEBUG === '1') console.error('signup', e); return false; }
+}
+
+/* spam check for newsletter signups. Returns { block: reason } or { ipHash }.
+   A scrambled IP (never the IP itself) caps signups per connection; it's cleared after 30 days by the daily job. */
+export async function screenSignup(env, req, body) {
+  const ua = req.headers.get('user-agent') || '', ip = ipOf(req);
+  const ipHash = ip ? sha('rr-signup|' + (secretOf(env) || 'rr') + '|' + ip).slice(0, 32) : null;
+  const domain = String(body.email || '').split('@')[1] || null;
+  let reason = null;
+  if (body.company) reason = 'hidden field filled';
+  else if (!sameSite(req, env)) reason = 'not sent from the site';
+  else if (isBot(ua, env)) reason = 'bot browser';
+  else if (!(+body.t >= 2500)) reason = 'too fast';
+  else if (ipHash && limited('s:' + ipHash, 3, 3600000)) reason = 'too many from one connection';
+  let q = null;
+  try { q = await db(env); } catch (_) {}
+  if (!reason && q && ipHash) {
+    const [r] = await q(`select count(*)::int as n from subscribers where ip_hash = $1 and created_at > now() - interval '24 hours'`, [ipHash]);
+    if (r.n >= 3) reason = 'too many from one connection';
+  }
+  if (reason) {
+    if (q) await q(`insert into signup_blocks (reason, ip_hash, email_domain) values ($1, $2, $3)`, [reason, ipHash, domain]).catch(() => {});
+    return { block: reason };
+  }
+  return { ipHash };
 }
